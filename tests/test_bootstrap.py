@@ -46,6 +46,8 @@ class BootstrapTests(unittest.TestCase):
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
     )
+
+
     def test_supported_host_reports_package(
         self,
         resolve_mock,
@@ -77,6 +79,8 @@ class BootstrapTests(unittest.TestCase):
             "Cannot determine architecture."
         ),
     )
+
+
     def test_host_detection_failure_returns_one(
         self,
         resolve_mock,
@@ -135,6 +139,8 @@ class BootstrapTests(unittest.TestCase):
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
     )
+
+
     def test_download_option_verifies_selected_package(
         self,
         resolve_mock,
@@ -177,6 +183,8 @@ class BootstrapTests(unittest.TestCase):
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
     )
+
+
     def test_download_failure_returns_three(
         self,
         resolve_mock,
@@ -208,6 +216,7 @@ class BootstrapTests(unittest.TestCase):
     @patch("bootstrap.load_manifest")
     @patch("bootstrap.detect_host")
 
+
     def test_resolution_passes_detected_values(
         self,
         detect_mock,
@@ -236,6 +245,70 @@ class BootstrapTests(unittest.TestCase):
             os_id="debian",
             codename="trixie",
             architecture="arm64",
+        )
+
+
+    def test_existing_installation_report_when_absent(self):
+        report = bootstrap.describe_existing_installation({
+            "present": False,
+        })
+
+        self.assertIn(
+            "Existing SvxLink installation: not detected",
+            report,
+        )
+        self.assertIn(
+            "selected package would be required",
+            report,
+        )
+
+
+    def test_supported_existing_installation_report(self):
+        report = bootstrap.describe_existing_installation({
+            "present": True,
+            "version": "1.10.1@26.05.1",
+            "executable": "/usr/bin/svxlink",
+            "service_load_state": "loaded",
+            "service_active_state": "active",
+            "package_status": "",
+            "supported_version": True,
+        })
+
+        self.assertIn(
+            "supported SvxLink 26.05.1",
+            report,
+        )
+        self.assertIn(
+            "package installation can be skipped",
+            report,
+        )
+        self.assertIn(
+            "configuration will be backed up",
+            report,
+        )
+
+    def test_unknown_existing_installation_report(self):
+        report = bootstrap.describe_existing_installation({
+            "present": True,
+            "version": "",
+            "executable": "",
+            "service_load_state": "loaded",
+            "service_active_state": "inactive",
+            "package_status": "",
+            "supported_version": False,
+        })
+
+        self.assertIn(
+            "Reported version: unknown",
+            report,
+        )
+        self.assertIn(
+            "unsupported or unknown",
+            report,
+        )
+        self.assertIn(
+            "stop for manual review",
+            report,
         )
 
 

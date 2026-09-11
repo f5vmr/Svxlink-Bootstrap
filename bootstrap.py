@@ -21,6 +21,7 @@ from package_selector import (
     load_manifest,
     select_package,
 )
+from existing_installation import detect_existing_installation
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -81,6 +82,70 @@ def resolve_host_package(
 
     return host, package
 
+def describe_existing_installation(installation):
+    """Return a concise existing-installation report."""
+
+    if not installation["present"]:
+        return (
+            "Existing SvxLink installation: not detected\n"
+            "The selected package would be required."
+        )
+
+    details = [
+        "Existing SvxLink installation: detected",
+    ]
+
+    if installation["version"]:
+        details.append(
+            f"Reported version: {installation['version']}"
+        )
+    else:
+        details.append("Reported version: unknown")
+
+    if installation["executable"]:
+        details.append(
+            f"Executable:       {installation['executable']}"
+        )
+
+    if installation["service_load_state"]:
+        details.append(
+            "Service:          "
+            f"{installation['service_load_state']}"
+            "/"
+            f"{installation['service_active_state'] or 'unknown'}"
+        )
+
+    if installation["package_status"]:
+        details.append(
+            f"Debian package:   {installation['package_status']}"
+        )
+    else:
+        details.append(
+            "Debian package:   not detected"
+        )
+
+    if installation["supported_version"]:
+        details.extend([
+            "Compatibility:    supported SvxLink 26.05.1",
+            (
+                "The SvxLink package installation can be "
+                "skipped."
+            ),
+            (
+                "Before dashboard installation, the existing "
+                "configuration will be backed up."
+            ),
+        ])
+    else:
+        details.extend([
+            "Compatibility:    unsupported or unknown",
+            (
+                "Automatic installation must stop for manual "
+                "review."
+            ),
+        ])
+
+    return "\n".join(details)
 
 def main(download_directory=None):
     """Detect the host and optionally download its package."""
@@ -107,6 +172,11 @@ def main(download_directory=None):
     print()
     print("Compatible SvxLink package found:")
     print(describe_package(package))
+    print()
+
+    installation = detect_existing_installation()
+
+    print(describe_existing_installation(installation))
     print()
 
     if download_directory is None:
