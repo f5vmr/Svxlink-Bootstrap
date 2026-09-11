@@ -179,10 +179,33 @@ def main(download_directory=None):
     print(describe_existing_installation(installation))
     print()
 
+    if (
+        installation["present"]
+        and not installation["supported_version"]
+    ):
+        print(
+            "Automatic processing stopped because the "
+            "existing SvxLink version could not be confirmed "
+            "as 26.05.1.",
+            file=sys.stderr,
+        )
+        return 4
+
     if download_directory is None:
         print(
             "No files were downloaded and no system "
             "changes were made."
+        )
+        return 0
+
+
+    if installation["supported_version"]:
+        print(
+            "SvxLink 26.05.1 is already installed. "
+            "The package download was skipped."
+        )
+        print(
+            "No system configuration was changed."
         )
         return 0
 

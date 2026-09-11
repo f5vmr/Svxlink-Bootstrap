@@ -135,6 +135,7 @@ class BootstrapTests(unittest.TestCase):
             "/tmp/packages/svxlink_26.05.1_arm64.deb"
         ),
     )
+
     @patch(
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
@@ -179,6 +180,7 @@ class BootstrapTests(unittest.TestCase):
             "Checksum mismatch."
         ),
     )
+
     @patch(
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
@@ -213,7 +215,9 @@ class BootstrapTests(unittest.TestCase):
         resolve_mock.assert_called_once_with()
 
     @patch("bootstrap.select_package")
+
     @patch("bootstrap.load_manifest")
+
     @patch("bootstrap.detect_host")
 
 
@@ -310,6 +314,97 @@ class BootstrapTests(unittest.TestCase):
             "stop for manual review",
             report,
         )
+
+    @patch("bootstrap.download_package")
+
+    @patch(
+        "bootstrap.detect_existing_installation",
+        return_value={
+            "present": True,
+            "version": "1.10.1@26.05.1",
+            "executable": "/usr/bin/svxlink",
+            "service_load_state": "loaded",
+            "service_active_state": "active",
+            "package_status": "",
+            "supported_version": True,
+        },
+    )
+
+    @patch(
+        "bootstrap.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_supported_existing_installation_skips_download(
+        self,
+        resolve_mock,
+        installation_mock,
+        download_mock,
+    ):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        with (
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            result = bootstrap.main(
+                download_directory="/tmp/packages"
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stderr.getvalue(), "")
+        self.assertIn(
+            "package download was skipped",
+            stdout.getvalue(),
+        )
+        download_mock.assert_not_called()
+        installation_mock.assert_called_once_with()
+        resolve_mock.assert_called_once_with()
+
+    @patch("bootstrap.download_package")
+
+    @patch(
+        "bootstrap.detect_existing_installation",
+        return_value={
+            "present": True,
+            "version": "1.8.0@19.09",
+            "executable": "/usr/bin/svxlink",
+            "service_load_state": "loaded",
+            "service_active_state": "active",
+            "package_status": "",
+            "supported_version": False,
+        },
+    )
+
+    @patch(
+        "bootstrap.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_unsupported_existing_installation_stops(
+        self,
+        resolve_mock,
+        installation_mock,
+        download_mock,
+    ):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        with (
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            result = bootstrap.main(
+                download_directory="/tmp/packages"
+            )
+
+        self.assertEqual(result, 4)
+        self.assertIn(
+            "Automatic processing stopped",
+            stderr.getvalue(),
+        )
+        download_mock.assert_not_called()
+        installation_mock.assert_called_once_with()
+        resolve_mock.assert_called_once_with()
 
 
 if __name__ == "__main__":
