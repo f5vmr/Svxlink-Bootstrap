@@ -1,0 +1,18 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+
+# Local virtual environments
+.venv/
+venv/
+
+# macOS metadata
+.DS_Store
+
+# Test and coverage output
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Downloaded package files
+*.deb
