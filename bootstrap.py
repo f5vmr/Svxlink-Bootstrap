@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 
 """
-Detect the host and report the matching SvxLink package.
-
-This stage is deliberately read-only. It does not download or install
-anything.
+Detect the host and report or download its matching SvxLink package.
 """
 
+import argparse
 import sys
 from pathlib import Path
 
 from host_detection import (
     HostDetectionError,
     detect_host,
+)
+from package_download import (
+    PackageDownloadError,
+    download_package,
 )
 from package_selector import (
     PackageSelectionError,
@@ -80,8 +82,8 @@ def resolve_host_package(
     return host, package
 
 
-def main():
-    """Run read-only host and package selection."""
+def main(download_directory=None):
+    """Detect the host and optionally download its package."""
 
     print("SvxLink Bootstrap — compatibility check")
     print()
@@ -106,13 +108,63 @@ def main():
     print("Compatible SvxLink package found:")
     print(describe_package(package))
     print()
+
+    if download_directory is None:
+        print(
+            "No files were downloaded and no system "
+            "changes were made."
+        )
+        return 0
+
+    try:
+        package_path = download_package(
+            package,
+            download_directory,
+        )
+    except PackageDownloadError as exc:
+        print(
+            f"Package download failed: {exc}",
+            file=sys.stderr,
+        )
+        return 3
+
+    print("Package downloaded and verified:")
+    print(package_path)
+    print()
     print(
-        "No files were downloaded and no system "
-        "changes were made."
+        "The package has not been installed and no "
+        "system configuration was changed."
     )
 
     return 0
 
 
+def parse_arguments():
+    """Parse command-line arguments."""
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Detect a supported host and select its "
+            "SvxLink package."
+        )
+    )
+    parser.add_argument(
+        "--download",
+        metavar="DIRECTORY",
+        help=(
+            "Download and verify the selected package "
+            "in DIRECTORY without installing it."
+        ),
+    )
+
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    arguments = parse_arguments()
+
+    raise SystemExit(
+        main(
+            download_directory=arguments.download,
+        )
+    )

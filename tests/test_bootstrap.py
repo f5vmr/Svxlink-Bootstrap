@@ -10,8 +10,9 @@ from unittest.mock import patch
 
 import bootstrap
 from host_detection import HostDetectionError
+from package_download import PackageDownloadError
 from package_selector import NoMatchingPackageError
-
+from pathlib import Path
 
 HOST = {
     "platform": "raspberry_pi",
@@ -102,6 +103,8 @@ class BootstrapTests(unittest.TestCase):
             "No supported package."
         ),
     )
+
+
     def test_unsupported_host_returns_two(
         self,
         resolve_mock,
@@ -122,9 +125,89 @@ class BootstrapTests(unittest.TestCase):
         )
         resolve_mock.assert_called_once_with()
 
+    @patch(
+        "bootstrap.download_package",
+        return_value=Path(
+            "/tmp/packages/svxlink_26.05.1_arm64.deb"
+        ),
+    )
+    @patch(
+        "bootstrap.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_download_option_verifies_selected_package(
+        self,
+        resolve_mock,
+        download_mock,
+    ):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        with (
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            result = bootstrap.main(
+                download_directory="/tmp/packages"
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stderr.getvalue(), "")
+        self.assertIn(
+            "Package downloaded and verified",
+            stdout.getvalue(),
+        )
+        self.assertIn(
+            "has not been installed",
+            stdout.getvalue(),
+        )
+        download_mock.assert_called_once_with(
+            PACKAGE,
+            "/tmp/packages",
+        )
+        resolve_mock.assert_called_once_with()
+
+    @patch(
+        "bootstrap.download_package",
+        side_effect=PackageDownloadError(
+            "Checksum mismatch."
+        ),
+    )
+    @patch(
+        "bootstrap.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_download_failure_returns_three(
+        self,
+        resolve_mock,
+        download_mock,
+    ):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        with (
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            result = bootstrap.main(
+                download_directory="/tmp/packages"
+            )
+
+        self.assertEqual(result, 3)
+        self.assertIn(
+            "Package download failed",
+            stderr.getvalue(),
+        )
+        download_mock.assert_called_once_with(
+            PACKAGE,
+            "/tmp/packages",
+        )
+        resolve_mock.assert_called_once_with()
+
     @patch("bootstrap.select_package")
     @patch("bootstrap.load_manifest")
     @patch("bootstrap.detect_host")
+
     def test_resolution_passes_detected_values(
         self,
         detect_mock,
