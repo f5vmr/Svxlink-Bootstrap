@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+
+import unittest
+
+from contextlib import (
+    redirect_stderr,
+    redirect_stdout,
+)
+from io import StringIO
+from pathlib import Path
+from unittest.mock import patch
+
+import bootstrap
+
+from configuration_backup import ConfigurationBackupError
+from dashboard_installation import DashboardInstallationError
+from package_download import PackageDownloadError
+from package_installation import PackageInstallationError
+from system_access import RootAccessRequiredError
+
+
+PACKAGE = {
+    "id": "debian_bookworm_amd64",
+    "asset": "svxlink_26.05.1_amd64.deb",
+}
+
+EXISTING_SUPPORTED = {
+    "supported_version": True,
+}
+
+NOT_INSTALLED = {
+    "supported_version": False,
+}
+
+
+class InstallationOrchestrationTests(unittest.TestCase):
+    def run_installation(self, installation):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        with (
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            result = bootstrap.perform_installation(
+                PACKAGE,
+                installation,
+            )
+
+        return result, stdout.getvalue(), stderr.getvalue()
+
+    def test_non_root_installation_is_rejected(self):
+        with (
+            patch(
+                "bootstrap.require_root",
+                side_effect=RootAccessRequiredError(
+                    "Installation requires root privileges."
+                ),
+            ),
+            patch(
+                "bootstrap.backup_existing_configuration"
+            ) as backup_mock,
+            patch(
+                "bootstrap.download_package"
+            ) as download_mock,
+            patch(
+                "bootstrap.install_dashboard"
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                EXISTING_SUPPORTED
+            )
+
+        self.assertEqual(result, 5)
+        self.assertEqual(stdout, "")
+        self.assertIn(
+            "requires root privileges",
+            stderr,
+        )
+        backup_mock.assert_not_called()
+        download_mock.assert_not_called()
+        dashboard_mock.assert_not_called()
+
+    def test_existing_supported_installation_is_backed_up(self):
+        backup_path = Path(
+            "/var/backups/svxlink-bootstrap/20260911-220000"
+        )
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.backup_existing_configuration",
+                return_value=backup_path,
+            ) as backup_mock,
+            patch(
+                "bootstrap.download_package"
+            ) as download_mock,
+            patch(
+                "bootstrap.install_package"
+            ) as package_install_mock,
+            patch(
+                "bootstrap.install_dashboard",
+                return_value=Path("/opt/dashboard"),
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                EXISTING_SUPPORTED
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stderr, "")
+        self.assertIn(
+            str(backup_path),
+            stdout,
+        )
+        self.assertIn(
+            "SvxLink-Dash V4.0 installed successfully",
+            stdout,
+        )
+        backup_mock.assert_called_once_with()
+        download_mock.assert_not_called()
+        package_install_mock.assert_not_called()
+        dashboard_mock.assert_called_once_with()
+
+    def test_backup_failure_stops_installation(self):
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.backup_existing_configuration",
+                side_effect=ConfigurationBackupError(
+                    "Permission denied."
+                ),
+            ),
+            patch(
+                "bootstrap.install_dashboard"
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                EXISTING_SUPPORTED
+            )
+
+        self.assertEqual(result, 6)
+        self.assertIn(
+            "Configuration backup failed",
+            stderr,
+        )
+        dashboard_mock.assert_not_called()
+
+    def test_new_installation_downloads_and_installs_package(self):
+        package_path = Path(
+            "/tmp/download/svxlink_26.05.1_amd64.deb"
+        )
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.download_package",
+                return_value=package_path,
+            ) as download_mock,
+            patch(
+                "bootstrap.install_package"
+            ) as package_install_mock,
+            patch(
+                "bootstrap.install_dashboard",
+                return_value=Path("/opt/dashboard"),
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                NOT_INSTALLED
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stderr, "")
+        self.assertIn(
+            "SvxLink 26.05.1 installed successfully",
+            stdout,
+        )
+
+        download_mock.assert_called_once()
+        self.assertEqual(
+            download_mock.call_args.args[0],
+            PACKAGE,
+        )
+        package_install_mock.assert_called_once_with(
+            package_path
+        )
+        dashboard_mock.assert_called_once_with()
+
+    def test_package_download_failure_stops_installation(self):
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.download_package",
+                side_effect=PackageDownloadError(
+                    "Checksum mismatch."
+                ),
+            ),
+            patch(
+                "bootstrap.install_package"
+            ) as package_install_mock,
+            patch(
+                "bootstrap.install_dashboard"
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                NOT_INSTALLED
+            )
+
+        self.assertEqual(result, 3)
+        self.assertIn(
+            "Package download failed",
+            stderr,
+        )
+        package_install_mock.assert_not_called()
+        dashboard_mock.assert_not_called()
+
+    def test_package_installation_failure_stops_dashboard(self):
+        package_path = Path(
+            "/tmp/download/svxlink_26.05.1_amd64.deb"
+        )
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.download_package",
+                return_value=package_path,
+            ),
+            patch(
+                "bootstrap.install_package",
+                side_effect=PackageInstallationError(
+                    "APT failed."
+                ),
+            ),
+            patch(
+                "bootstrap.install_dashboard"
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                NOT_INSTALLED
+            )
+
+        self.assertEqual(result, 7)
+        self.assertIn(
+            "Package installation failed",
+            stderr,
+        )
+        dashboard_mock.assert_not_called()
+
+    def test_dashboard_failure_is_reported(self):
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.backup_existing_configuration",
+                return_value=Path(
+                    "/var/backups/svxlink-bootstrap/"
+                    "20260911-220001"
+                ),
+            ),
+            patch(
+                "bootstrap.install_dashboard",
+                side_effect=DashboardInstallationError(
+                    "Installer failed."
+                ),
+            ),
+        ):
+            result, stdout, stderr = self.run_installation(
+                EXISTING_SUPPORTED
+            )
+
+        self.assertEqual(result, 8)
+        self.assertIn(
+            "Dashboard installation failed",
+            stderr,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

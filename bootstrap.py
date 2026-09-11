@@ -6,23 +6,47 @@ Detect the host and report or download its matching SvxLink package.
 
 import argparse
 import sys
+import tempfile
+
 from pathlib import Path
 
 from host_detection import (
     HostDetectionError,
     detect_host,
 )
+
 from package_download import (
     PackageDownloadError,
     download_package,
 )
+
 from package_selector import (
     PackageSelectionError,
     load_manifest,
     select_package,
 )
+
 from existing_installation import detect_existing_installation
 
+from configuration_backup import (
+    ConfigurationBackupError,
+    backup_existing_configuration,
+)
+
+from dashboard_installation import (
+    DashboardInstallationError,
+    install_dashboard,
+)
+
+from package_installation import (
+    PackageInstallationError,
+    install_package,
+)
+
+from system_access import (
+    RootAccessRequiredError,
+    require_root,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 MANIFEST_PATH = (
@@ -147,7 +171,88 @@ def describe_existing_installation(installation):
 
     return "\n".join(details)
 
-def main(download_directory=None):
+def perform_installation(package, installation):
+    """Install SvxLink when required, then install the dashboard."""
+
+    try:
+        require_root()
+    except RootAccessRequiredError as exc:
+        print(str(exc), file=sys.stderr)
+        return 5
+
+    if installation["supported_version"]:
+        print(
+            "WARNING: An existing supported SvxLink "
+            "installation was detected."
+        )
+        print(
+            "Its configuration will be backed up before "
+            "the dashboard installer is run."
+        )
+        print()
+
+        try:
+            backup_path = backup_existing_configuration()
+        except ConfigurationBackupError as exc:
+            print(
+                f"Configuration backup failed: {exc}",
+                file=sys.stderr,
+            )
+            return 6
+
+        print("Existing SvxLink configuration backed up:")
+        print(backup_path)
+        print()
+
+    else:
+        try:
+            with tempfile.TemporaryDirectory(
+                prefix="svxlink-bootstrap-package-"
+            ) as download_directory:
+                package_path = download_package(
+                    package,
+                    download_directory,
+                )
+
+                print("SvxLink package downloaded and verified:")
+                print(package_path)
+                print()
+
+                install_package(package_path)
+
+        except PackageDownloadError as exc:
+            print(
+                f"Package download failed: {exc}",
+                file=sys.stderr,
+            )
+            return 3
+
+        except PackageInstallationError as exc:
+            print(
+                f"Package installation failed: {exc}",
+                file=sys.stderr,
+            )
+            return 7
+
+        print("SvxLink 26.05.1 installed successfully.")
+        print()
+
+    try:
+        dashboard_path = install_dashboard()
+    except DashboardInstallationError as exc:
+        print(
+            f"Dashboard installation failed: {exc}",
+            file=sys.stderr,
+        )
+        return 8
+
+    print("SvxLink-Dash V4.0 installed successfully:")
+    print(dashboard_path)
+
+    return 0
+
+
+def main(download_directory=None, install=False):
     """Detect the host and optionally download its package."""
 
     print("SvxLink Bootstrap — compatibility check")
@@ -190,6 +295,12 @@ def main(download_directory=None):
             file=sys.stderr,
         )
         return 4
+
+    if install:
+        return perform_installation(
+            package,
+            installation,
+        )
 
     if download_directory is None:
         print(
@@ -241,12 +352,24 @@ def parse_arguments():
             "SvxLink package."
         )
     )
-    parser.add_argument(
+    operation = parser.add_mutually_exclusive_group()
+
+    operation.add_argument(
         "--download",
         metavar="DIRECTORY",
         help=(
             "Download and verify the selected package "
             "in DIRECTORY without installing it."
+        ),
+    )
+
+    operation.add_argument(
+        "--install",
+        action="store_true",
+        help=(
+            "Install SvxLink when required, back up any "
+            "existing supported configuration, and install "
+            "SvxLink-Dash V4.0."
         ),
     )
 
@@ -259,5 +382,6 @@ if __name__ == "__main__":
     raise SystemExit(
         main(
             download_directory=arguments.download,
+            install=arguments.install,
         )
     )
