@@ -94,8 +94,13 @@ class ExistingInstallationTests(unittest.TestCase):
         },
     )
     @patch(
-        "existing_installation.detect_svxlink_version",
-        return_value="1.10.1@26.05.1",
+        "existing_installation.inspect_svxlink_executable",
+        return_value={
+            "version": "1.10.1@26.05.1",
+            "version_source": "executable",
+            "runtime_healthy": True,
+            "runtime_error": "",
+        },
     )
     @patch(
         "existing_installation.shutil.which",
@@ -104,7 +109,7 @@ class ExistingInstallationTests(unittest.TestCase):
     def test_manual_supported_installation_is_detected(
         self,
         which_mock,
-        version_mock,
+        inspection_mock,
         service_mock,
         package_mock,
         user_mock,
@@ -142,6 +147,15 @@ class ExistingInstallationTests(unittest.TestCase):
             result["package_status"],
             "",
         )
+        self.assertEqual(
+            result["version_source"],
+            "executable",
+        )
+        self.assertTrue(result["runtime_healthy"])
+        self.assertEqual(result["runtime_error"], "")
+        inspection_mock.assert_called_once_with(
+            "/usr/bin/svxlink"
+        )
 
     @patch(
         "existing_installation.svxlink_user_exists",
@@ -159,8 +173,19 @@ class ExistingInstallationTests(unittest.TestCase):
         },
     )
     @patch(
-        "existing_installation.detect_svxlink_version",
-        return_value="1.9.0@25.05.1",
+        "existing_installation.inspect_svxlink_executable",
+        return_value={
+            "version": (
+                "1.9.99.36@13.12.1-1903-g8515694c"
+            ),
+            "version_source": "embedded",
+            "runtime_healthy": False,
+            "runtime_error": (
+                "error while loading shared libraries: "
+                "libsigc-2.0.so.0: cannot open shared "
+                "object file"
+            ),
+        },
     )
     @patch(
         "existing_installation.shutil.which",
@@ -169,7 +194,7 @@ class ExistingInstallationTests(unittest.TestCase):
     def test_older_installation_is_unsupported(
         self,
         which_mock,
-        version_mock,
+        inspection_mock,
         service_mock,
         package_mock,
         user_mock,
@@ -182,6 +207,18 @@ class ExistingInstallationTests(unittest.TestCase):
         self.assertTrue(result["present"])
         self.assertFalse(
             result["supported_version"]
+        )
+        self.assertEqual(
+            result["version_source"],
+            "embedded",
+        )
+        self.assertFalse(result["runtime_healthy"])
+        self.assertIn(
+            "libsigc-2.0.so.0",
+            result["runtime_error"],
+        )
+        inspection_mock.assert_called_once_with(
+            "/usr/bin/svxlink"
         )
 
     @patch(

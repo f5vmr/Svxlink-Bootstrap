@@ -217,7 +217,10 @@ def detect_existing_installation(
     """Return evidence of an existing SvxLink installation."""
 
     executable = shutil.which("svxlink") or ""
-    version = detect_svxlink_version(executable)
+    inspection = inspect_svxlink_executable(
+        executable
+    )
+    version = inspection["version"]
     service = detect_service()
     package_status = detect_package_status()
 
@@ -228,6 +231,15 @@ def detect_existing_installation(
     evidence = {
         "executable": executable,
         "version": version,
+        "version_source": inspection[
+            "version_source"
+        ],
+        "runtime_healthy": inspection[
+            "runtime_healthy"
+        ],
+        "runtime_error": inspection[
+            "runtime_error"
+        ],
         "service_load_state": service["load_state"],
         "service_active_state": service["active_state"],
         "package_status": package_status,
