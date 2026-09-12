@@ -112,14 +112,22 @@ def resolve_host_package(
 def describe_existing_installation(installation):
     """Return a concise existing-installation report."""
 
-    if not installation["present"]:
+    action = determine_installation_action(
+        installation
+    )
+
+    if action == "install":
         return (
             "Existing SvxLink installation: not detected\n"
-            "The selected package would be required."
+            "The selected package will be required."
         )
 
     details = [
         "Existing SvxLink installation: detected",
+        (
+            "Installation type: "
+            f"{installation.get('installation_type', 'unknown')}"
+        ),
     ]
 
     if installation["version"]:
@@ -128,6 +136,12 @@ def describe_existing_installation(installation):
         )
     else:
         details.append("Reported version: unknown")
+
+    if installation.get("version_source"):
+        details.append(
+            "Version source:   "
+            f"{installation['version_source']}"
+        )
 
     if installation["executable"]:
         details.append(
@@ -151,18 +165,46 @@ def describe_existing_installation(installation):
             "Debian package:   not detected"
         )
 
-    if installation["supported_version"]:
+    if not installation.get("runtime_healthy", True):
+        details.append("Runtime state:    unable to start")
+
+        runtime_error = installation.get(
+            "runtime_error",
+            "",
+        )
+
+        if runtime_error:
+            details.append(
+                "Runtime error:    "
+                f"{runtime_error.splitlines()[0]}"
+            )
+
+    if action == "retain":
         details.extend([
             "Compatibility:    supported SvxLink 26.05.1",
             (
-                "The SvxLink package installation can be "
-                "skipped."
+                "The existing package-managed installation "
+                "will be retained."
             ),
             (
-                "Before dashboard installation, the existing "
-                "configuration will be backed up."
+                "Its configuration will be backed up before "
+                "dashboard installation."
             ),
         ])
+
+    elif action == "convert":
+        details.extend([
+            "Compatibility:    compiler installation",
+            (
+                "The existing configuration will be backed "
+                "up before package conversion."
+            ),
+            (
+                "The verified SvxLink 26.05.1 package will "
+                "replace the compiler-installed program."
+            ),
+        ])
+
     else:
         details.extend([
             "Compatibility:    unsupported or unknown",
@@ -310,17 +352,18 @@ def main(download_directory=None, install=False):
 
     installation = detect_existing_installation()
 
+    action = determine_installation_action(
+        installation
+    )
+
     print(describe_existing_installation(installation))
     print()
 
-    if (
-        installation["present"]
-        and not installation["supported_version"]
-    ):
+    if action == "block":
         print(
             "Automatic processing stopped because the "
-            "existing SvxLink version could not be confirmed "
-            "as 26.05.1.",
+            "existing SvxLink installation is not eligible "
+            "for retention or package conversion.",
             file=sys.stderr,
         )
         return 4
@@ -339,10 +382,10 @@ def main(download_directory=None, install=False):
         return 0
 
 
-    if installation["supported_version"]:
+    if action == "retain":
         print(
-            "SvxLink 26.05.1 is already installed. "
-            "The package download was skipped."
+            "Package-managed SvxLink 26.05.1 is already "
+            "installed. The package download was skipped."
         )
         print(
             "No system configuration was changed."

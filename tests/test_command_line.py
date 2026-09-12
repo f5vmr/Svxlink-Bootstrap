@@ -40,8 +40,29 @@ PACKAGE = {
 NOT_INSTALLED = {
     "present": False,
     "supported_version": False,
+    "package_managed": False,
+    "conversion_candidate": False,
 }
 
+
+COMPILER_INSTALLATION = {
+    "present": True,
+    "supported_version": False,
+    "package_managed": False,
+    "conversion_candidate": True,
+    "installation_type": "compiler",
+    "version": "1.9.99.36@13.12.1-1903-g8515694c",
+    "version_source": "embedded",
+    "runtime_healthy": False,
+    "runtime_error": (
+        "error while loading shared libraries: "
+        "libsigc-2.0.so.0"
+    ),
+    "executable": "/usr/bin/svxlink",
+    "service_load_state": "loaded",
+    "service_active_state": "failed",
+    "package_status": "",
+}
 
 class CommandLineTests(unittest.TestCase):
     def test_install_argument_is_parsed(self):
@@ -128,6 +149,45 @@ class CommandLineTests(unittest.TestCase):
             PACKAGE,
             NOT_INSTALLED,
         )
+
+    @patch(
+        "bootstrap.perform_installation",
+        return_value=0,
+    )
+    @patch(
+        "bootstrap.detect_existing_installation",
+        return_value=COMPILER_INSTALLATION,
+    )
+    @patch(
+        "bootstrap.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_compiler_installation_reaches_conversion(
+        self,
+        resolve_mock,
+        installation_mock,
+        perform_mock,
+    ):
+        stdout = StringIO()
+
+        with redirect_stdout(stdout):
+            result = bootstrap.main(install=True)
+
+        self.assertEqual(result, 0)
+        self.assertIn(
+            "compiler installation",
+            stdout.getvalue(),
+        )
+        self.assertIn(
+            "libsigc-2.0.so.0",
+            stdout.getvalue(),
+        )
+        perform_mock.assert_called_once_with(
+            PACKAGE,
+            COMPILER_INSTALLATION,
+        )
+        installation_mock.assert_called_once_with()
+        resolve_mock.assert_called_once_with()
 
 
 if __name__ == "__main__":

@@ -41,26 +41,21 @@ PACKAGE = {
 
 
 class BootstrapTests(unittest.TestCase):
-
     @patch(
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
     )
-
-
     def test_supported_host_reports_package(
         self,
         resolve_mock,
     ):
         stdout = StringIO()
         stderr = StringIO()
-
         with (
             redirect_stdout(stdout),
             redirect_stderr(stderr),
         ):
             result = bootstrap.main()
-
         self.assertEqual(result, 0)
         self.assertEqual(stderr.getvalue(), "")
         self.assertIn(
@@ -72,15 +67,12 @@ class BootstrapTests(unittest.TestCase):
             stdout.getvalue(),
         )
         resolve_mock.assert_called_once_with()
-
     @patch(
         "bootstrap.resolve_host_package",
         side_effect=HostDetectionError(
             "Cannot determine architecture."
         ),
     )
-
-
     def test_host_detection_failure_returns_one(
         self,
         resolve_mock,
@@ -100,48 +92,39 @@ class BootstrapTests(unittest.TestCase):
             stderr.getvalue(),
         )
         resolve_mock.assert_called_once_with()
-
     @patch(
         "bootstrap.resolve_host_package",
         side_effect=NoMatchingPackageError(
             "No supported package."
         ),
     )
-
-
     def test_unsupported_host_returns_two(
         self,
         resolve_mock,
     ):
         stdout = StringIO()
         stderr = StringIO()
-
         with (
             redirect_stdout(stdout),
             redirect_stderr(stderr),
         ):
             result = bootstrap.main()
-
         self.assertEqual(result, 2)
         self.assertIn(
             "Unsupported system",
             stderr.getvalue(),
         )
         resolve_mock.assert_called_once_with()
-
     @patch(
         "bootstrap.download_package",
         return_value=Path(
             "/tmp/packages/svxlink_26.05.1_arm64.deb"
         ),
     )
-
     @patch(
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
     )
-
-
     def test_download_option_verifies_selected_package(
         self,
         resolve_mock,
@@ -157,7 +140,6 @@ class BootstrapTests(unittest.TestCase):
             result = bootstrap.main(
                 download_directory="/tmp/packages"
             )
-
         self.assertEqual(result, 0)
         self.assertEqual(stderr.getvalue(), "")
         self.assertIn(
@@ -173,20 +155,16 @@ class BootstrapTests(unittest.TestCase):
             "/tmp/packages",
         )
         resolve_mock.assert_called_once_with()
-
     @patch(
         "bootstrap.download_package",
         side_effect=PackageDownloadError(
             "Checksum mismatch."
         ),
     )
-
     @patch(
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
     )
-
-
     def test_download_failure_returns_three(
         self,
         resolve_mock,
@@ -202,7 +180,6 @@ class BootstrapTests(unittest.TestCase):
             result = bootstrap.main(
                 download_directory="/tmp/packages"
             )
-
         self.assertEqual(result, 3)
         self.assertIn(
             "Package download failed",
@@ -215,12 +192,8 @@ class BootstrapTests(unittest.TestCase):
         resolve_mock.assert_called_once_with()
 
     @patch("bootstrap.select_package")
-
     @patch("bootstrap.load_manifest")
-
     @patch("bootstrap.detect_host")
-
-
     def test_resolution_passes_detected_values(
         self,
         detect_mock,
@@ -233,11 +206,9 @@ class BootstrapTests(unittest.TestCase):
             "packages": [],
         }
         select_mock.return_value = PACKAGE
-
         host, package = bootstrap.resolve_host_package(
             "test-manifest.json"
         )
-
         self.assertEqual(host, HOST)
         self.assertEqual(package, PACKAGE)
         load_mock.assert_called_once_with(
@@ -251,7 +222,6 @@ class BootstrapTests(unittest.TestCase):
             architecture="arm64",
         )
 
-
     def test_existing_installation_report_when_absent(self):
         report = bootstrap.describe_existing_installation({
             "present": False,
@@ -262,46 +232,54 @@ class BootstrapTests(unittest.TestCase):
             report,
         )
         self.assertIn(
-            "selected package would be required",
+            "selected package will be required",
             report,
         )
-
 
     def test_supported_existing_installation_report(self):
         report = bootstrap.describe_existing_installation({
             "present": True,
+            "installation_type": "package",
             "version": "1.10.1@26.05.1",
+            "version_source": "executable",
+            "runtime_healthy": True,
+            "runtime_error": "",
             "executable": "/usr/bin/svxlink",
             "service_load_state": "loaded",
             "service_active_state": "active",
-            "package_status": "",
+            "package_status": "ii  svxlink 26.05.1",
             "supported_version": True,
+            "package_managed": True,
+            "conversion_candidate": False,
         })
-
         self.assertIn(
             "supported SvxLink 26.05.1",
             report,
         )
         self.assertIn(
-            "package installation can be skipped",
+            "package-managed installation will be retained",
             report,
         )
         self.assertIn(
             "configuration will be backed up",
             report,
         )
-
     def test_unknown_existing_installation_report(self):
         report = bootstrap.describe_existing_installation({
             "present": True,
+            "installation_type": "remnants",
             "version": "",
+            "version_source": "",
+            "runtime_healthy": False,
+            "runtime_error": "",
             "executable": "",
             "service_load_state": "loaded",
             "service_active_state": "inactive",
             "package_status": "",
             "supported_version": False,
+            "package_managed": False,
+            "conversion_candidate": False,
         })
-
         self.assertIn(
             "Reported version: unknown",
             report,
@@ -314,9 +292,7 @@ class BootstrapTests(unittest.TestCase):
             "stop for manual review",
             report,
         )
-
     @patch("bootstrap.download_package")
-
     @patch(
         "bootstrap.detect_existing_installation",
         return_value={
@@ -327,9 +303,10 @@ class BootstrapTests(unittest.TestCase):
             "service_active_state": "active",
             "package_status": "",
             "supported_version": True,
+            "package_managed": True,
+            "conversion_candidate": False,
         },
     )
-
     @patch(
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
@@ -360,22 +337,25 @@ class BootstrapTests(unittest.TestCase):
         download_mock.assert_not_called()
         installation_mock.assert_called_once_with()
         resolve_mock.assert_called_once_with()
-
     @patch("bootstrap.download_package")
-
     @patch(
         "bootstrap.detect_existing_installation",
         return_value={
             "present": True,
+            "installation_type": "compiler",
             "version": "1.8.0@19.09",
-            "executable": "/usr/bin/svxlink",
+            "version_source": "executable",
+            "runtime_healthy": True,
+            "runtime_error": "",
+            "executable": "/usr/local/bin/svxlink",
             "service_load_state": "loaded",
             "service_active_state": "active",
             "package_status": "",
             "supported_version": False,
+            "package_managed": False,
+            "conversion_candidate": False,
         },
     )
-
     @patch(
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
