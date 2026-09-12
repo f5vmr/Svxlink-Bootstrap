@@ -4,6 +4,8 @@ Temporary web manager for SvxLink Bootstrap.
 """
 import secrets
 import socket
+import threading
+import time
 
 from flask import (
     Flask,
@@ -12,6 +14,8 @@ from flask import (
     render_template,
     request,
 )
+
+from werkzeug.serving import make_server
 
 from bootstrap import resolve_host_package
 from existing_installation import (
@@ -191,6 +195,29 @@ def create_app(
 
     return app
 
+
+def stop_server_after_handover(
+    state,
+    server,
+    poll_interval=0.5,
+    handover_delay=5.0,
+):
+    """Stop the temporary server after successful handover."""
+
+    while True:
+        status = state.snapshot()["status"]
+
+        if status == "completed":
+            time.sleep(handover_delay)
+            server.shutdown()
+            return
+
+        if status == "failed":
+            return
+
+        time.sleep(poll_interval)
+
+
 def main(
     bind_address="0.0.0.0",
     port=8765,
@@ -200,6 +227,7 @@ def main(
     access_token = secrets.token_urlsafe(32)
     confirmation_token = secrets.token_urlsafe(32)
     local_address = determine_local_address()
+    installation_state = InstallationState()
 
     browser_url = (
         f"http://{local_address}:{port}/"
@@ -212,7 +240,22 @@ def main(
     app = create_app(
         access_token=access_token,
         confirmation_token=confirmation_token,
+        installation_state=installation_state,
         dashboard_url=dashboard_url,
+    )
+    server = make_server(
+        bind_address,
+        port,
+        app,
+        threaded=True,
+    )
+    shutdown_monitor = threading.Thread(
+        target=stop_server_after_handover,
+        args=(
+            installation_state,
+            server,
+        ),
+        daemon=True,
     )
 
     print()
@@ -227,13 +270,16 @@ def main(
     )
     print()
 
-    app.run(
-        host=bind_address,
-        port=port,
-        debug=False,
-        use_reloader=False,
-        threaded=True,
-    )
+    shutdown_monitor.start()
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print()
+        print("SvxLink Bootstrap web manager stopped.")
+    finally:
+        server.server_close()
+
     return 0
 
 

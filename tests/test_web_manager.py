@@ -6,6 +6,7 @@ from web_manager import (
     create_app,
     determine_local_address,
     main as web_manager_main,
+    stop_server_after_handover,
 )
 from web_installation import (
     InstallationAlreadyStartedError,
@@ -311,6 +312,8 @@ class WebManagerTests(unittest.TestCase):
             ("192.0.2.1", 9)
         )
 
+    @patch("web_manager.threading.Thread")
+    @patch("web_manager.make_server")
     @patch("web_manager.create_app")
     @patch(
         "web_manager.determine_local_address",
@@ -328,9 +331,15 @@ class WebManagerTests(unittest.TestCase):
         token_mock,
         address_mock,
         create_app_mock,
+        make_server_mock,
+        thread_mock,
     ):
         app = Mock()
+        server = Mock()
+        shutdown_monitor = Mock()
         create_app_mock.return_value = app
+        make_server_mock.return_value = server
+        thread_mock.return_value = shutdown_monitor
 
         result = web_manager_main(
             bind_address="0.0.0.0",
@@ -338,23 +347,102 @@ class WebManagerTests(unittest.TestCase):
         )
 
         self.assertEqual(result, 0)
-        create_app_mock.assert_called_once_with(
-            access_token="access-token",
-            confirmation_token="confirmation-token",
-            dashboard_url=(
+
+        create_arguments = (
+            create_app_mock.call_args.kwargs
+        )
+        installation_state = create_arguments[
+            "installation_state"
+        ]
+
+        self.assertIsInstance(
+            installation_state,
+            InstallationState,
+        )
+        self.assertEqual(
+            create_arguments["access_token"],
+            "access-token",
+        )
+        self.assertEqual(
+            create_arguments["confirmation_token"],
+            "confirmation-token",
+        )
+        self.assertEqual(
+            create_arguments["dashboard_url"],
+            (
                 "http:"
                 "//192.0.2.25:5000/start"
             ),
         )
-        app.run.assert_called_once_with(
-            host="0.0.0.0",
-            port=8765,
-            debug=False,
-            use_reloader=False,
+
+        make_server_mock.assert_called_once_with(
+            "0.0.0.0",
+            8765,
+            app,
             threaded=True,
         )
+        thread_mock.assert_called_once_with(
+            target=stop_server_after_handover,
+            args=(
+                installation_state,
+                server,
+            ),
+            daemon=True,
+        )
+        shutdown_monitor.start.assert_called_once_with()
+        server.serve_forever.assert_called_once_with()
+        server.server_close.assert_called_once_with()
         self.assertEqual(token_mock.call_count, 2)
         address_mock.assert_called_once_with()
+
+
+    @patch("web_manager.time.sleep")
+    def test_completed_handover_stops_server(
+        self,
+        sleep_mock,
+    ):
+        state = InstallationState()
+        server = Mock()
+
+        state.start()
+        state.complete(
+            "http:"
+            "//192.0.2.25:5000/start"
+        )
+
+        stop_server_after_handover(
+            state,
+            server,
+            poll_interval=0.01,
+            handover_delay=5.0,
+        )
+
+        sleep_mock.assert_called_once_with(5.0)
+        server.shutdown.assert_called_once_with()
+
+    @patch("web_manager.time.sleep")
+    def test_failed_installation_keeps_server_available(
+        self,
+        sleep_mock,
+    ):
+        state = InstallationState()
+        server = Mock()
+
+        state.start()
+        state.fail(
+            "package",
+            "APT installation failed.",
+        )
+
+        stop_server_after_handover(
+            state,
+            server,
+            poll_interval=0.01,
+            handover_delay=5.0,
+        )
+
+        sleep_mock.assert_not_called()
+        server.shutdown.assert_not_called()
 
 
 if __name__ == "__main__":
