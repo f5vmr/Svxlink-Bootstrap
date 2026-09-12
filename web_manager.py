@@ -17,7 +17,12 @@ from existing_installation import (
     detect_existing_installation,
     determine_installation_action,
 )
-from web_installation import InstallationState
+from web_installation import (
+    InstallationAlreadyStartedError,
+    InstallationState,
+    start_installation_job,
+)
+
 
 def token_matches(candidate, expected):
     """Compare a supplied access token safely."""
@@ -35,6 +40,7 @@ def create_app(
     access_token=None,
     confirmation_token=None,
     installation_state=None,
+    dashboard_url=None,
 ):
     """Create the temporary Bootstrap web application."""
 
@@ -50,6 +56,13 @@ def create_app(
         ),
         "BOOTSTRAP_CONFIRMATION_TOKEN": (
             confirmation_token or secrets.token_urlsafe(32)
+        ),
+        "BOOTSTRAP_DASHBOARD_URL": (
+            dashboard_url
+            or (
+                "http:"
+                "//127.0.0.1:5000/start"
+            )
         ),
     })
     if installation_state is None:
@@ -121,9 +134,44 @@ def create_app(
         ):
             abort(403)
 
-        return (
-            "Installation endpoint is not enabled yet.",
-            503,
+        _, package = resolve_host_package()
+        installation = detect_existing_installation()
+        action = determine_installation_action(
+            installation
         )
+
+        if action == "block":
+            return (
+                jsonify({
+                    "status": "blocked",
+                    "message": (
+                        "The existing SvxLink installation "
+                        "requires manual review."
+                    ),
+                }),
+                409,
+            )
+
+        state = app.extensions[
+            "bootstrap_installation_state"
+        ]
+
+        try:
+            start_installation_job(
+                state,
+                package,
+                installation,
+                app.config["BOOTSTRAP_DASHBOARD_URL"],
+            )
+        except InstallationAlreadyStartedError as exc:
+            return (
+                jsonify({
+                    "status": "conflict",
+                    "message": str(exc),
+                }),
+                409,
+            )
+
+        return jsonify(state.snapshot()), 202
 
     return app

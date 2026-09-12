@@ -3,7 +3,10 @@ import unittest
 from unittest.mock import patch
 
 from web_manager import create_app
-from web_installation import InstallationState
+from web_installation import (
+    InstallationAlreadyStartedError,
+    InstallationState,
+)
 
 
 HOST = {
@@ -41,10 +44,15 @@ class WebManagerTests(unittest.TestCase):
 
     def setUp(self):
         self.installation_state = InstallationState()
+        self.dashboard_url = (
+            "http:"
+            "//192.0.2.10:5000/start"
+        )
         self.app = create_app(
             access_token="test-access-token",
             confirmation_token="test-confirmation-token",
             installation_state=self.installation_state,
+            dashboard_url=self.dashboard_url,
         )
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
@@ -134,7 +142,26 @@ class WebManagerTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    def test_installation_endpoint_remains_disabled(self):
+    @patch("web_manager.start_installation_job")
+    @patch(
+        "web_manager.determine_installation_action",
+        return_value="install",
+    )
+    @patch(
+        "web_manager.detect_existing_installation",
+        return_value=INSTALLATION,
+    )
+    @patch(
+        "web_manager.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_authorised_installation_is_started(
+        self,
+        resolve_mock,
+        installation_mock,
+        action_mock,
+        start_mock,
+    ):
         response = self.client.post(
             "/install?token=test-access-token",
             data={
@@ -144,10 +171,119 @@ class WebManagerTests(unittest.TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 503)
-        self.assertIn(
-            b"not enabled yet",
-            response.data,
+        self.assertEqual(response.status_code, 202)
+        start_mock.assert_called_once_with(
+            self.installation_state,
+            PACKAGE,
+            INSTALLATION,
+            self.dashboard_url,
+        )
+        resolve_mock.assert_called_once_with()
+        installation_mock.assert_called_once_with()
+        action_mock.assert_called_once_with(
+            INSTALLATION
+        )
+
+    @patch("web_manager.resolve_host_package")
+    def test_installation_requires_confirmation_token(
+        self,
+        resolve_mock,
+    ):
+        response = self.client.post(
+            "/install?token=test-access-token",
+            data={
+                "confirmation_token": "incorrect-token",
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+        resolve_mock.assert_not_called()
+
+    @patch("web_manager.start_installation_job")
+    @patch(
+        "web_manager.determine_installation_action",
+        return_value="block",
+    )
+    @patch(
+        "web_manager.detect_existing_installation",
+        return_value=INSTALLATION,
+    )
+    @patch(
+        "web_manager.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_blocked_installation_is_not_started(
+        self,
+        resolve_mock,
+        installation_mock,
+        action_mock,
+        start_mock,
+    ):
+        response = self.client.post(
+            "/install?token=test-access-token",
+            data={
+                "confirmation_token": (
+                    "test-confirmation-token"
+                ),
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.get_json()["status"],
+            "blocked",
+        )
+        start_mock.assert_not_called()
+        resolve_mock.assert_called_once_with()
+        installation_mock.assert_called_once_with()
+        action_mock.assert_called_once_with(
+            INSTALLATION
+        )
+
+    @patch(
+        "web_manager.start_installation_job",
+        side_effect=InstallationAlreadyStartedError(
+            "The installation has already been started."
+        ),
+    )
+    @patch(
+        "web_manager.determine_installation_action",
+        return_value="install",
+    )
+    @patch(
+        "web_manager.detect_existing_installation",
+        return_value=INSTALLATION,
+    )
+    @patch(
+        "web_manager.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_second_installation_start_is_rejected(
+        self,
+        resolve_mock,
+        installation_mock,
+        action_mock,
+        start_mock,
+    ):
+        response = self.client.post(
+            "/install?token=test-access-token",
+            data={
+                "confirmation_token": (
+                    "test-confirmation-token"
+                ),
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.get_json()["status"],
+            "conflict",
+        )
+        start_mock.assert_called_once_with(
+            self.installation_state,
+            PACKAGE,
+            INSTALLATION,
+            self.dashboard_url,
         )
 
 
