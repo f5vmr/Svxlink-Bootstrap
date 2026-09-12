@@ -5,7 +5,7 @@ import unittest
 
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from package_installation import (
     PackageInstallationError,
@@ -115,7 +115,10 @@ class PackageInstallationTests(unittest.TestCase):
     )
     @patch(
         "package_installation.shutil.which",
-        return_value="/usr/bin/apt-get",
+        side_effect=[
+            "/usr/bin/apt-get",
+            "/usr/bin/systemctl",
+        ],
     )
     @patch("package_installation.require_root")
     def test_apt_failure_is_reported(
@@ -144,7 +147,10 @@ class PackageInstallationTests(unittest.TestCase):
     )
     @patch(
         "package_installation.shutil.which",
-        return_value="/usr/bin/apt-get",
+        side_effect=[
+            "/usr/bin/apt-get",
+            "/usr/bin/systemctl",
+        ],
     )
     @patch("package_installation.require_root")
     def test_verified_package_is_installed(
@@ -161,11 +167,17 @@ class PackageInstallationTests(unittest.TestCase):
             self.package_path.resolve(),
         )
         require_root_mock.assert_called_once_with()
-        which_mock.assert_called_once_with("apt-get")
-        run_mock.assert_called_once()
+        self.assertEqual(
+            which_mock.call_args_list,
+            [
+                call("apt-get"),
+                call("systemctl"),
+            ],
+        )
+        self.assertEqual(run_mock.call_count, 2)
         detection_mock.assert_called_once_with()
 
-        command = run_mock.call_args.args[0]
+        command = run_mock.call_args_list[0].args[0]
         self.assertEqual(
             command,
             [
@@ -178,10 +190,25 @@ class PackageInstallationTests(unittest.TestCase):
             ],
         )
 
-        environment = run_mock.call_args.kwargs["env"]
+        environment = (
+            run_mock.call_args_list[0].kwargs["env"]
+        )
         self.assertEqual(
             environment["DEBIAN_FRONTEND"],
             "noninteractive",
+        )
+        self.assertEqual(
+            run_mock.call_args_list[1].args[0],
+            [
+                "/usr/bin/systemctl",
+                "daemon-reload",
+            ],
+        )
+        self.assertEqual(
+            run_mock.call_args_list[1].kwargs,
+            {
+                "check": False,
+            },
         )
 
     @patch(
@@ -194,7 +221,10 @@ class PackageInstallationTests(unittest.TestCase):
     )
     @patch(
         "package_installation.shutil.which",
-        return_value="/usr/bin/apt-get",
+        side_effect=[
+            "/usr/bin/apt-get",
+            "/usr/bin/systemctl",
+        ],
     )
     @patch("package_installation.require_root")
     def test_post_installation_verification_is_required(
@@ -211,8 +241,14 @@ class PackageInstallationTests(unittest.TestCase):
             install_package(self.package_path)
 
         require_root_mock.assert_called_once_with()
-        which_mock.assert_called_once_with("apt-get")
-        run_mock.assert_called_once()
+        self.assertEqual(
+            which_mock.call_args_list,
+            [
+                call("apt-get"),
+                call("systemctl"),
+            ],
+        )
+        self.assertEqual(run_mock.call_count, 2)
         detection_mock.assert_called_once_with()
 
 

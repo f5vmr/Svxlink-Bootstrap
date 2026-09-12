@@ -17,6 +17,34 @@ from system_access import require_root
 class PackageInstallationError(RuntimeError):
     """Raised when the SvxLink Debian package cannot be installed."""
 
+def reload_systemd_manager():
+    """Reload systemd unit files after package installation."""
+
+    systemctl = shutil.which("systemctl")
+
+    if not systemctl:
+        raise PackageInstallationError(
+            "systemctl was not found after package installation."
+        )
+
+    try:
+        result = subprocess.run(
+            [
+                systemctl,
+                "daemon-reload",
+            ],
+            check=False,
+        )
+    except OSError as exc:
+        raise PackageInstallationError(
+            f"Could not start systemctl: {exc}"
+        ) from exc
+
+    if result.returncode != 0:
+        raise PackageInstallationError(
+            "systemctl daemon-reload failed "
+            f"(exit status {result.returncode})."
+        )
 
 def install_package(package_path):
     """
@@ -74,6 +102,7 @@ def install_package(package_path):
             f"(exit status {result.returncode})."
         )
 
+    reload_systemd_manager()
     installation = detect_existing_installation()
 
     if not installation["supported_version"]:
