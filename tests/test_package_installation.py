@@ -138,6 +138,10 @@ class PackageInstallationTests(unittest.TestCase):
         run_mock.assert_called_once()
 
     @patch(
+        "package_installation.svxlink_package_owns_file",
+        return_value=True,
+    )
+    @patch(
         "package_installation.detect_existing_installation",
         return_value=SUPPORTED_INSTALLATION,
     )
@@ -159,6 +163,7 @@ class PackageInstallationTests(unittest.TestCase):
         which_mock,
         run_mock,
         detection_mock,
+        ownership_mock,
     ):
         result = install_package(self.package_path)
 
@@ -176,7 +181,9 @@ class PackageInstallationTests(unittest.TestCase):
         )
         self.assertEqual(run_mock.call_count, 2)
         detection_mock.assert_called_once_with()
-
+        ownership_mock.assert_called_once_with(
+            "/usr/bin/svxlink"
+        )
         command = run_mock.call_args_list[0].args[0]
         self.assertEqual(
             command,
@@ -210,7 +217,56 @@ class PackageInstallationTests(unittest.TestCase):
                 "check": False,
             },
         )
+    @patch(
+        "package_installation.svxlink_package_owns_file",
+        return_value=False,
+    )
+    @patch(
+        "package_installation.detect_existing_installation"
+    )
+    @patch(
+        "package_installation.subprocess.run",
+        return_value=SimpleNamespace(returncode=0),
+    )
+    @patch(
+        "package_installation.shutil.which",
+        side_effect=[
+            "/usr/bin/apt-get",
+            "/usr/bin/systemctl",
+        ],
+    )
+    @patch("package_installation.require_root")
+    def test_package_ownership_is_required(
+        self,
+        require_root_mock,
+        which_mock,
+        run_mock,
+        detection_mock,
+        ownership_mock,
+    ):
+        with self.assertRaisesRegex(
+            PackageInstallationError,
+            "not owned by the svxlink Debian package",
+        ):
+            install_package(self.package_path)
 
+        require_root_mock.assert_called_once_with()
+        self.assertEqual(
+            which_mock.call_args_list,
+            [
+                call("apt-get"),
+                call("systemctl"),
+            ],
+        )
+        self.assertEqual(run_mock.call_count, 2)
+        ownership_mock.assert_called_once_with(
+            "/usr/bin/svxlink"
+        )
+        detection_mock.assert_not_called()
+    @patch(
+        "package_installation.svxlink_package_owns_file",
+        return_value=True,
+    )
     @patch(
         "package_installation.detect_existing_installation",
         return_value=UNSUPPORTED_INSTALLATION,
@@ -233,6 +289,7 @@ class PackageInstallationTests(unittest.TestCase):
         which_mock,
         run_mock,
         detection_mock,
+        ownership_mock,
     ):
         with self.assertRaisesRegex(
             PackageInstallationError,
@@ -250,6 +307,9 @@ class PackageInstallationTests(unittest.TestCase):
         )
         self.assertEqual(run_mock.call_count, 2)
         detection_mock.assert_called_once_with()
+        ownership_mock.assert_called_once_with(
+            "/usr/bin/svxlink"
+        )
 
 
 if __name__ == "__main__":

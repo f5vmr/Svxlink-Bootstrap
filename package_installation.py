@@ -10,7 +10,10 @@ import subprocess
 
 from pathlib import Path
 
-from existing_installation import detect_existing_installation
+from existing_installation import (
+    detect_existing_installation,
+    svxlink_package_owns_file,
+)
 from system_access import require_root
 
 
@@ -103,6 +106,15 @@ def install_package(package_path):
         )
 
     reload_systemd_manager()
+
+    if not svxlink_package_owns_file(
+        "/usr/bin/svxlink"
+    ):
+        raise PackageInstallationError(
+            "APT completed, but /usr/bin/svxlink is not "
+            "owned by the svxlink Debian package."
+        )
+
     installation = detect_existing_installation()
 
     if not installation["supported_version"]:
