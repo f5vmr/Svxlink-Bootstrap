@@ -209,6 +209,96 @@ def svxlink_user_exists():
 
     return True
 
+def package_status_is_installed(package_status):
+    """Return True for an installed SvxLink Debian package."""
+
+    fields = str(package_status or "").split()
+
+    return (
+        len(fields) >= 3
+        and fields[0] == "ii"
+        and fields[1] == "svxlink"
+    )
+
+
+def resolve_executable_path(executable):
+    """Return the canonical executable path."""
+
+    if not executable:
+        return ""
+
+    try:
+        return str(
+            Path(executable).resolve()
+        )
+    except OSError:
+        return str(executable)
+
+
+def classify_installation(evidence):
+    """Classify the provenance of detected SvxLink files."""
+
+    if not evidence["present"]:
+        return {
+            "installation_type": "absent",
+            "package_managed": False,
+            "conversion_candidate": False,
+        }
+
+    package_managed = package_status_is_installed(
+        evidence["package_status"]
+    )
+
+    if package_managed:
+        return {
+            "installation_type": "package",
+            "package_managed": True,
+            "conversion_candidate": False,
+        }
+
+    compiler_installation = (
+        bool(evidence["executable"])
+        and evidence["service_load_state"] == "loaded"
+    )
+
+    if compiler_installation:
+        canonical_executable = evidence[
+            "canonical_executable"
+        ]
+
+        return {
+            "installation_type": "compiler",
+            "package_managed": False,
+            "conversion_candidate": (
+                canonical_executable
+                == "/usr/bin/svxlink"
+            ),
+        }
+
+    return {
+        "installation_type": "remnants",
+        "package_managed": False,
+        "conversion_candidate": False,
+    }
+
+
+def determine_installation_action(installation):
+    """Return the safe action for an existing installation."""
+
+    if not installation["present"]:
+        return "install"
+
+    if (
+        installation["package_managed"]
+        and installation["supported_version"]
+    ):
+        return "retain"
+
+    if installation["conversion_candidate"]:
+        return "convert"
+
+    return "block"
+
 
 def detect_existing_installation(
     config_directory="/etc/svxlink",
@@ -217,6 +307,9 @@ def detect_existing_installation(
     """Return evidence of an existing SvxLink installation."""
 
     executable = shutil.which("svxlink") or ""
+    canonical_executable = resolve_executable_path(
+        executable
+    )
     inspection = inspect_svxlink_executable(
         executable
     )
@@ -230,6 +323,7 @@ def detect_existing_installation(
 
     evidence = {
         "executable": executable,
+        "canonical_executable": canonical_executable,
         "version": version,
         "version_source": inspection[
             "version_source"
@@ -266,6 +360,10 @@ def detect_existing_installation(
         and version_is_supported(
             evidence["version"]
         )
+    )
+
+    evidence.update(
+        classify_installation(evidence)
     )
 
     return evidence

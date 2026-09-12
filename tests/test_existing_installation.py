@@ -12,6 +12,9 @@ from existing_installation import (
     version_is_supported,
     detect_embedded_version,
     inspect_svxlink_executable,
+    classify_installation,
+    package_status_is_installed,
+    determine_installation_action,
 )
 
 
@@ -22,6 +25,126 @@ class ExistingInstallationTests(unittest.TestCase):
             version_is_supported(
                 "1.10.1@26.05.1"
             )
+        )
+
+    def test_installed_package_status_is_recognised(self):
+        self.assertTrue(
+            package_status_is_installed(
+                "ii  svxlink 26.05.1"
+            )
+        )
+        self.assertFalse(
+            package_status_is_installed("")
+        )
+        self.assertFalse(
+            package_status_is_installed(
+                "rc  svxlink 25.05.1"
+            )
+        )
+
+    def test_package_installation_is_classified(self):
+        result = classify_installation({
+            "present": True,
+            "package_status": "ii  svxlink 26.05.1",
+            "executable": "/usr/bin/svxlink",
+            "canonical_executable": "/usr/bin/svxlink",
+            "service_load_state": "loaded",
+        })
+
+        self.assertEqual(
+            result["installation_type"],
+            "package",
+        )
+        self.assertTrue(result["package_managed"])
+        self.assertFalse(
+            result["conversion_candidate"]
+        )
+
+    def test_absent_installation_requires_package(self):
+        action = determine_installation_action({
+            "present": False,
+            "package_managed": False,
+            "supported_version": False,
+            "conversion_candidate": False,
+        })
+
+        self.assertEqual(action, "install")
+
+    def test_current_package_installation_is_retained(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": True,
+            "supported_version": True,
+            "conversion_candidate": False,
+        })
+
+        self.assertEqual(action, "retain")
+
+    def test_current_compiler_installation_is_converted(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": False,
+            "supported_version": True,
+            "conversion_candidate": True,
+        })
+
+        self.assertEqual(action, "convert")
+
+    def test_older_compiler_installation_is_converted(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": False,
+            "supported_version": False,
+            "conversion_candidate": True,
+        })
+
+        self.assertEqual(action, "convert")
+
+    def test_unrecognised_installation_is_blocked(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": False,
+            "supported_version": False,
+            "conversion_candidate": False,
+        })
+
+        self.assertEqual(action, "block")
+
+    def test_standard_compiler_installation_is_convertible(self):
+        result = classify_installation({
+            "present": True,
+            "package_status": "",
+            "executable": "/usr/bin/svxlink",
+            "canonical_executable": "/usr/bin/svxlink",
+            "service_load_state": "loaded",
+        })
+
+        self.assertEqual(
+            result["installation_type"],
+            "compiler",
+        )
+        self.assertFalse(result["package_managed"])
+        self.assertTrue(
+            result["conversion_candidate"]
+        )
+
+    def test_nonstandard_compiler_installation_is_blocked(self):
+        result = classify_installation({
+            "present": True,
+            "package_status": "",
+            "executable": "/usr/local/bin/svxlink",
+            "canonical_executable": (
+                "/usr/local/bin/svxlink"
+            ),
+            "service_load_state": "loaded",
+        })
+
+        self.assertEqual(
+            result["installation_type"],
+            "compiler",
+        )
+        self.assertFalse(
+            result["conversion_candidate"]
         )
 
     def test_other_versions_are_rejected(self):
@@ -76,6 +199,10 @@ class ExistingInstallationTests(unittest.TestCase):
         self.assertFalse(result["present"])
         self.assertFalse(
             result["supported_version"]
+        )
+        self.assertEqual(
+            result["installation_type"],
+            "absent",
         )
 
     @patch(
@@ -155,6 +282,14 @@ class ExistingInstallationTests(unittest.TestCase):
         self.assertEqual(result["runtime_error"], "")
         inspection_mock.assert_called_once_with(
             "/usr/bin/svxlink"
+        )
+        self.assertEqual(
+            result["installation_type"],
+            "compiler",
+        )
+        self.assertFalse(result["package_managed"])
+        self.assertTrue(
+            result["conversion_candidate"]
         )
 
     @patch(
@@ -263,6 +398,10 @@ class ExistingInstallationTests(unittest.TestCase):
         self.assertTrue(result["present"])
         self.assertFalse(
             result["supported_version"]
+        )
+        self.assertEqual(
+            result["installation_type"],
+            "remnants",
         )
 
     @patch(
