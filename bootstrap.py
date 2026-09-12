@@ -346,6 +346,13 @@ def perform_installation(
                 print()
 
                 if action == "convert":
+                    report_installation_progress(
+                        progress,
+                        "service",
+                        "running",
+                        "Preparing the existing SvxLink service.",
+                    )
+
                     service_stopped = (
                         stop_svxlink_service_if_active(
                             installation
@@ -358,7 +365,25 @@ def perform_installation(
                             "has been stopped."
                         )
                         print()
-
+                        report_installation_progress(
+                            progress,
+                            "service",
+                            "completed",
+                            (
+                                "The active SvxLink service "
+                                "was stopped."
+                            ),
+                        )
+                    else:
+                        report_installation_progress(
+                            progress,
+                            "service",
+                            "skipped",
+                            (
+                                "The SvxLink service was not "
+                                "active."
+                            ),
+                        )
                 install_package(package_path)
 
         except PackageDownloadError as exc:
