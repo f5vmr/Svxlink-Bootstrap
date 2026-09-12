@@ -7,6 +7,7 @@ import secrets
 from flask import (
     Flask,
     abort,
+    jsonify,
     render_template,
     request,
 )
@@ -16,7 +17,7 @@ from existing_installation import (
     detect_existing_installation,
     determine_installation_action,
 )
-
+from web_installation import InstallationState
 
 def token_matches(candidate, expected):
     """Compare a supplied access token safely."""
@@ -33,6 +34,7 @@ def token_matches(candidate, expected):
 def create_app(
     access_token=None,
     confirmation_token=None,
+    installation_state=None,
 ):
     """Create the temporary Bootstrap web application."""
 
@@ -50,6 +52,12 @@ def create_app(
             confirmation_token or secrets.token_urlsafe(32)
         ),
     })
+    if installation_state is None:
+        installation_state = InstallationState()
+
+    app.extensions[
+        "bootstrap_installation_state"
+    ] = installation_state
 
     def require_access_token():
         supplied_token = request.args.get("token", "")
@@ -85,6 +93,16 @@ def create_app(
                 ]
             ),
         )
+
+    @app.get("/status")
+    def installation_status():
+        require_access_token()
+
+        state = app.extensions[
+            "bootstrap_installation_state"
+        ]
+
+        return jsonify(state.snapshot())
 
     @app.post("/install")
     def start_installation():

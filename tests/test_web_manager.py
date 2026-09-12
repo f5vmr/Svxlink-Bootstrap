@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch
 
 from web_manager import create_app
+from web_installation import InstallationState
 
 
 HOST = {
@@ -39,9 +40,11 @@ INSTALLATION = {
 class WebManagerTests(unittest.TestCase):
 
     def setUp(self):
+        self.installation_state = InstallationState()
         self.app = create_app(
             access_token="test-access-token",
             confirmation_token="test-confirmation-token",
+            installation_state=self.installation_state,
         )
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
@@ -102,6 +105,26 @@ class WebManagerTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 403)
         resolve_mock.assert_not_called()
+
+    def test_authorised_status_is_returned(self):
+        response = self.client.get(
+            "/status?token=test-access-token"
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        status = response.get_json()
+
+        self.assertFalse(status["started"])
+        self.assertEqual(status["status"], "idle")
+        self.assertEqual(status["sequence"], 0)
+
+    def test_status_requires_access_token(self):
+        response = self.client.get(
+            "/status?token=incorrect-token"
+        )
+
+        self.assertEqual(response.status_code, 403)
 
     def test_installation_endpoint_remains_disabled(self):
         response = self.client.post(
