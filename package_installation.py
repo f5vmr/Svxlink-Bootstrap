@@ -49,6 +49,46 @@ def reload_systemd_manager():
             f"(exit status {result.returncode})."
         )
 
+def verify_installed_package(installation):
+    """Verify the installed SvxLink package and executable."""
+
+    if not installation.get("supported_version", False):
+        raise PackageInstallationError(
+            "APT completed, but SvxLink 26.05.1 could not "
+            "be verified after installation."
+        )
+
+    if not installation.get("package_managed", False):
+        raise PackageInstallationError(
+            "APT completed, but SvxLink is not recorded as "
+            "a package-managed installation."
+        )
+
+    if (
+        installation.get("canonical_executable", "")
+        != "/usr/bin/svxlink"
+    ):
+        raise PackageInstallationError(
+            "APT completed, but the canonical SvxLink "
+            "executable is not /usr/bin/svxlink."
+        )
+
+    if not installation.get("runtime_healthy", False):
+        runtime_error = installation.get(
+            "runtime_error",
+            "",
+        )
+
+        message = (
+            "APT completed, but /usr/bin/svxlink could not "
+            "run successfully."
+        )
+
+        if runtime_error:
+            message = f"{message} {runtime_error}"
+
+        raise PackageInstallationError(message)
+
 def install_package(package_path):
     """
     Install a verified local Debian package using APT.
@@ -116,11 +156,6 @@ def install_package(package_path):
         )
 
     installation = detect_existing_installation()
-
-    if not installation["supported_version"]:
-        raise PackageInstallationError(
-            "APT completed, but SvxLink 26.05.1 could not "
-            "be verified after installation."
-        )
+    verify_installed_package(installation)
 
     return package_path

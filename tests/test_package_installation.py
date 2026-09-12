@@ -10,12 +10,17 @@ from unittest.mock import call, patch
 from package_installation import (
     PackageInstallationError,
     install_package,
+    verify_installed_package,
 )
 from system_access import RootAccessRequiredError
 
 
 SUPPORTED_INSTALLATION = {
     "supported_version": True,
+    "package_managed": True,
+    "canonical_executable": "/usr/bin/svxlink",
+    "runtime_healthy": True,
+    "runtime_error": "",
 }
 
 UNSUPPORTED_INSTALLATION = {
@@ -33,6 +38,41 @@ class PackageInstallationTests(unittest.TestCase):
             / "svxlink_26.05.1_amd64.deb"
         )
         self.package_path.write_bytes(b"test package")
+
+    def test_package_managed_installation_is_required(self):
+        installation = dict(SUPPORTED_INSTALLATION)
+        installation["package_managed"] = False
+
+        with self.assertRaisesRegex(
+            PackageInstallationError,
+            "not recorded as a package-managed installation",
+        ):
+            verify_installed_package(installation)
+
+    def test_canonical_package_executable_is_required(self):
+        installation = dict(SUPPORTED_INSTALLATION)
+        installation["canonical_executable"] = (
+            "/usr/local/bin/svxlink"
+        )
+
+        with self.assertRaisesRegex(
+            PackageInstallationError,
+            "canonical SvxLink executable is not",
+        ):
+            verify_installed_package(installation)
+
+    def test_healthy_package_executable_is_required(self):
+        installation = dict(SUPPORTED_INSTALLATION)
+        installation["runtime_healthy"] = False
+        installation["runtime_error"] = (
+            "libexample.so: cannot open shared object file"
+        )
+
+        with self.assertRaisesRegex(
+            PackageInstallationError,
+            "libexample.so",
+        ):
+            verify_installed_package(installation)
 
     @patch("package_installation.subprocess.run")
     @patch(
