@@ -26,7 +26,10 @@ from package_selector import (
     select_package,
 )
 
-from existing_installation import detect_existing_installation
+from existing_installation import (
+    detect_existing_installation,
+    determine_installation_action,
+)
 
 from configuration_backup import (
     ConfigurationBackupError,
@@ -172,7 +175,19 @@ def describe_existing_installation(installation):
     return "\n".join(details)
 
 def perform_installation(package, installation):
-    """Install SvxLink when required, then install the dashboard."""
+    """Install or convert SvxLink, then install the dashboard."""
+
+    action = determine_installation_action(
+        installation
+    )
+
+    if action == "block":
+        print(
+            "Automatic installation is blocked for this "
+            "existing SvxLink installation.",
+            file=sys.stderr,
+        )
+        return 4
 
     try:
         require_root()
@@ -180,14 +195,14 @@ def perform_installation(package, installation):
         print(str(exc), file=sys.stderr)
         return 5
 
-    if installation["supported_version"]:
+    if action in {"retain", "convert"}:
         print(
-            "WARNING: An existing supported SvxLink "
-            "installation was detected."
+            "WARNING: An existing SvxLink installation "
+            "was detected."
         )
         print(
             "Its configuration will be backed up before "
-            "the dashboard installer is run."
+            "installation continues."
         )
         print()
 
@@ -204,7 +219,14 @@ def perform_installation(package, installation):
         print(backup_path)
         print()
 
-    else:
+    if action in {"install", "convert"}:
+        if action == "convert":
+            print(
+                "The compiler-installed SvxLink will be "
+                "converted to the verified Debian package."
+            )
+            print()
+
         try:
             with tempfile.TemporaryDirectory(
                 prefix="svxlink-bootstrap-package-"
@@ -235,6 +257,13 @@ def perform_installation(package, installation):
             return 7
 
         print("SvxLink 26.05.1 installed successfully.")
+        print()
+
+    else:
+        print(
+            "The package-managed SvxLink 26.05.1 "
+            "installation will be retained."
+        )
         print()
 
     try:

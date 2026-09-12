@@ -25,11 +25,24 @@ PACKAGE = {
 }
 
 EXISTING_SUPPORTED = {
+    "present": True,
     "supported_version": True,
+    "package_managed": True,
+    "conversion_candidate": False,
 }
 
 NOT_INSTALLED = {
+    "present": False,
     "supported_version": False,
+    "package_managed": False,
+    "conversion_candidate": False,
+}
+
+COMPILER_INSTALLATION = {
+    "present": True,
+    "supported_version": False,
+    "package_managed": False,
+    "conversion_candidate": True,
 }
 
 
@@ -120,6 +133,58 @@ class InstallationOrchestrationTests(unittest.TestCase):
         backup_mock.assert_called_once_with()
         download_mock.assert_not_called()
         package_install_mock.assert_not_called()
+        dashboard_mock.assert_called_once_with()
+
+    def test_compiler_installation_is_backed_up_and_converted(self):
+        backup_path = Path(
+            "/var/backups/svxlink-bootstrap/20260912-090000"
+        )
+        package_path = Path(
+            "/tmp/download/svxlink_26.05.1_amd64.deb"
+        )
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.backup_existing_configuration",
+                return_value=backup_path,
+            ) as backup_mock,
+            patch(
+                "bootstrap.download_package",
+                return_value=package_path,
+            ) as download_mock,
+            patch(
+                "bootstrap.install_package"
+            ) as package_install_mock,
+            patch(
+                "bootstrap.install_dashboard",
+                return_value=Path("/opt/dashboard"),
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                COMPILER_INSTALLATION
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stderr, "")
+        self.assertIn(str(backup_path), stdout)
+        self.assertIn(
+            "compiler-installed SvxLink",
+            stdout,
+        )
+        self.assertIn(
+            "SvxLink 26.05.1 installed successfully",
+            stdout,
+        )
+        backup_mock.assert_called_once_with()
+        download_mock.assert_called_once()
+        self.assertEqual(
+            download_mock.call_args.args[0],
+            PACKAGE,
+        )
+        package_install_mock.assert_called_once_with(
+            package_path
+        )
         dashboard_mock.assert_called_once_with()
 
     def test_backup_failure_stops_installation(self):
