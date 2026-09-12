@@ -384,7 +384,35 @@ def perform_installation(
                                 "active."
                             ),
                         )
+                else:
+                    report_installation_progress(
+                        progress,
+                        "service",
+                        "skipped",
+                        (
+                            "No compiler-installed SvxLink "
+                            "service requires preparation."
+                        ),
+                    )
+
+                report_installation_progress(
+                    progress,
+                    "package",
+                    "running",
+                    "Installing and verifying SvxLink 26.05.1.",
+                )
+
                 install_package(package_path)
+
+                report_installation_progress(
+                    progress,
+                    "package",
+                    "completed",
+                    (
+                        "SvxLink 26.05.1 was installed and "
+                        "verified successfully."
+                    ),
+                )
 
         except PackageDownloadError as exc:
             report_installation_progress(
@@ -400,6 +428,12 @@ def perform_installation(
             return 3
 
         except ServiceControlError as exc:
+            report_installation_progress(
+                progress,
+                "service",
+                "failed",
+                str(exc),
+            )
             print(
                 f"Service control failed: {exc}",
                 file=sys.stderr,
@@ -407,6 +441,12 @@ def perform_installation(
             return 9
 
         except PackageInstallationError as exc:
+            report_installation_progress(
+                progress,
+                "package",
+                "failed",
+                str(exc),
+            )
             print(
                 f"Package installation failed: {exc}",
                 file=sys.stderr,
@@ -424,6 +464,24 @@ def perform_installation(
             (
                 "The installed SvxLink package is already "
                 "current."
+            ),
+        )
+        report_installation_progress(
+            progress,
+            "service",
+            "skipped",
+            (
+                "The retained SvxLink service requires no "
+                "package-conversion preparation."
+            ),
+        )
+        report_installation_progress(
+            progress,
+            "package",
+            "skipped",
+            (
+                "The verified package-managed SvxLink "
+                "installation will be retained."
             ),
         )
         print(

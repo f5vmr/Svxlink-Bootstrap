@@ -167,6 +167,22 @@ class InstallationOrchestrationTests(unittest.TestCase):
                 "current."
             ),
         )
+        progress_mock.assert_any_call(
+            "service",
+            "skipped",
+            (
+                "The retained SvxLink service requires no "
+                "package-conversion preparation."
+            ),
+        )
+        progress_mock.assert_any_call(
+            "package",
+            "skipped",
+            (
+                "The verified package-managed SvxLink "
+                "installation will be retained."
+            ),
+        )
         download_mock.assert_not_called()
         package_install_mock.assert_not_called()
         dashboard_mock.assert_called_once_with()
@@ -178,7 +194,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
         package_path = Path(
             "/tmp/download/svxlink_26.05.1_amd64.deb"
         )
-
+        progress_mock = Mock()
         with (
             patch("bootstrap.require_root"),
             patch(
@@ -198,7 +214,8 @@ class InstallationOrchestrationTests(unittest.TestCase):
             ) as dashboard_mock,
         ):
             result, stdout, stderr = self.run_installation(
-                COMPILER_INSTALLATION
+                COMPILER_INSTALLATION,
+                progress=progress_mock,
             )
 
         self.assertEqual(result, 0)
@@ -213,6 +230,29 @@ class InstallationOrchestrationTests(unittest.TestCase):
             stdout,
         )
         backup_mock.assert_called_once_with()
+        progress_mock.assert_any_call(
+            "service",
+            "running",
+            "Preparing the existing SvxLink service.",
+        )
+        progress_mock.assert_any_call(
+            "service",
+            "skipped",
+            "The SvxLink service was not active.",
+        )
+        progress_mock.assert_any_call(
+            "package",
+            "running",
+            "Installing and verifying SvxLink 26.05.1.",
+        )
+        progress_mock.assert_any_call(
+            "package",
+            "completed",
+            (
+                "SvxLink 26.05.1 was installed and "
+                "verified successfully."
+            ),
+        )
         download_mock.assert_called_once()
         self.assertEqual(
             download_mock.call_args.args[0],
@@ -306,6 +346,27 @@ class InstallationOrchestrationTests(unittest.TestCase):
                 ),
             ],
         )
+        progress_mock.assert_any_call(
+            "service",
+            "skipped",
+            (
+                "No compiler-installed SvxLink service "
+                "requires preparation."
+            ),
+        )
+        progress_mock.assert_any_call(
+            "package",
+            "running",
+            "Installing and verifying SvxLink 26.05.1.",
+        )
+        progress_mock.assert_any_call(
+            "package",
+            "completed",
+            (
+                "SvxLink 26.05.1 was installed and "
+                "verified successfully."
+            ),
+        )
         download_mock.assert_called_once()
         self.assertEqual(
             download_mock.call_args.args[0],
@@ -368,7 +429,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
         package_path = Path(
             "/tmp/download/svxlink_26.05.1_amd64.deb"
         )
-
+        progress_mock = Mock()
         with (
             patch("bootstrap.require_root"),
             patch(
@@ -386,10 +447,29 @@ class InstallationOrchestrationTests(unittest.TestCase):
             ) as dashboard_mock,
         ):
             result, stdout, stderr = self.run_installation(
-                NOT_INSTALLED
+                NOT_INSTALLED,
+                progress=progress_mock,
             )
 
         self.assertEqual(result, 7)
+        self.assertEqual(
+            progress_mock.call_args_list[-2:],
+            [
+                call(
+                    "package",
+                    "running",
+                    (
+                        "Installing and verifying "
+                        "SvxLink 26.05.1."
+                    ),
+                ),
+                call(
+                    "package",
+                    "failed",
+                    "APT failed.",
+                ),
+            ],
+        )
         self.assertIn(
             "Package installation failed",
             stderr,
