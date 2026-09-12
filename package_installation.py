@@ -56,6 +56,8 @@ def install_package(package_path):
                 apt_get,
                 "install",
                 "--yes",
+                "-o",
+                "Dpkg::Options::=--force-confold",
                 str(package_path),
             ],
             check=False,

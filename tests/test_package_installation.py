@@ -172,6 +172,8 @@ class PackageInstallationTests(unittest.TestCase):
                 "/usr/bin/apt-get",
                 "install",
                 "--yes",
+                "-o",
+                "Dpkg::Options::=--force-confold",
                 str(self.package_path.resolve()),
             ],
         )
