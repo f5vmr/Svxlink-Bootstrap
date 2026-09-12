@@ -490,18 +490,37 @@ def perform_installation(
         )
         print()
 
+    report_installation_progress(
+        progress,
+        "dashboard",
+        "running",
+        "Installing SvxLink-Dash V4.0.",
+    )
+
     try:
         dashboard_path = install_dashboard()
     except DashboardInstallationError as exc:
+        report_installation_progress(
+            progress,
+            "dashboard",
+            "failed",
+            str(exc),
+        )
         print(
             f"Dashboard installation failed: {exc}",
             file=sys.stderr,
         )
         return 8
 
+    report_installation_progress(
+        progress,
+        "dashboard",
+        "completed",
+        "SvxLink-Dash V4.0 was installed successfully.",
+    )
+
     print("SvxLink-Dash V4.0 installed successfully:")
     print(dashboard_path)
-
     return 0
 
 

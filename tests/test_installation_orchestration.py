@@ -185,6 +185,19 @@ class InstallationOrchestrationTests(unittest.TestCase):
         )
         download_mock.assert_not_called()
         package_install_mock.assert_not_called()
+        progress_mock.assert_any_call(
+            "dashboard",
+            "running",
+            "Installing SvxLink-Dash V4.0.",
+        )
+        progress_mock.assert_any_call(
+            "dashboard",
+            "completed",
+            (
+                "SvxLink-Dash V4.0 was installed "
+                "successfully."
+            ),
+        )
         dashboard_mock.assert_called_once_with()
 
     def test_compiler_installation_is_backed_up_and_converted(self):
@@ -477,6 +490,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
         dashboard_mock.assert_not_called()
 
     def test_dashboard_failure_is_reported(self):
+        progress_mock = Mock()
         with (
             patch("bootstrap.require_root"),
             patch(
@@ -494,10 +508,26 @@ class InstallationOrchestrationTests(unittest.TestCase):
             ),
         ):
             result, stdout, stderr = self.run_installation(
-                EXISTING_SUPPORTED
+                EXISTING_SUPPORTED,
+                progress=progress_mock,
             )
 
         self.assertEqual(result, 8)
+        self.assertEqual(
+            progress_mock.call_args_list[-2:],
+            [
+                call(
+                    "dashboard",
+                    "running",
+                    "Installing SvxLink-Dash V4.0.",
+                ),
+                call(
+                    "dashboard",
+                    "failed",
+                    "Installer failed.",
+                ),
+            ],
+        )
         self.assertIn(
             "Dashboard installation failed",
             stderr,
