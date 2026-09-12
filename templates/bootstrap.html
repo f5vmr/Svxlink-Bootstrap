@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <title>SvxLink Bootstrap</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='bootstrap.css') }}"
+    >
+    <link
+        rel="icon"
+        href="{{ url_for('static', filename='svxlink.ico') }}"
+    >
+</head>
+<body>
+<main class="page">
+    <section class="card">
+        <div class="page-header">
+            <img
+                class="page-icon"
+                src="{{ url_for('static', filename='svxlink.ico') }}"
+                alt="SvxLink icon"
+            >
+            <div class="page-heading">
+                <h1>SvxLink Bootstrap</h1>
+                <p>
+                    Verified installation of SvxLink 26.05.1
+                    and SvxLink-Dash V4.0.
+                </p>
+            </div>
+        </div>
+
+        <div id="inspection-panel">
+            <div class="section">
+                <h2>Detected system</h2>
+                <dl class="details-grid">
+                    <dt>Operating system</dt>
+                    <dd>{{ host.pretty_name }}</dd>
+
+                    <dt>Platform</dt>
+                    <dd>{{ host.platform }}</dd>
+
+                    <dt>Architecture</dt>
+                    <dd>{{ host.architecture }}</dd>
+
+                    <dt>Device</dt>
+                    <dd>
+                        {{ host.device_model or "Not reported" }}
+                    </dd>
+                </dl>
+            </div>
+
+            <div class="section">
+                <h2>Selected package</h2>
+                <dl class="details-grid">
+                    <dt>Package</dt>
+                    <dd>{{ package.asset }}</dd>
+
+                    <dt>Release</dt>
+                    <dd>{{ package.tag }}</dd>
+
+                    <dt>Recorded size</dt>
+                    <dd>{{ package.size }} bytes</dd>
+
+                    <dt>SHA-256</dt>
+                    <dd>{{ package.sha256 }}</dd>
+                </dl>
+            </div>
+
+            <div class="section">
+                <h2>Existing SvxLink installation</h2>
+                <dl class="details-grid">
+                    <dt>Detected</dt>
+                    <dd>
+                        {{ "Yes" if installation.present else "No" }}
+                    </dd>
+
+                    <dt>Installation type</dt>
+                    <dd>
+                        {{
+                            installation.installation_type
+                            or "absent"
+                        }}
+                    </dd>
+
+                    <dt>Reported version</dt>
+                    <dd>
+                        {{ installation.version or "Unknown" }}
+                    </dd>
+
+                    <dt>Executable</dt>
+                    <dd>
+                        {{
+                            installation.executable
+                            or "Not detected"
+                        }}
+                    </dd>
+
+                    <dt>Service state</dt>
+                    <dd>
+                        {{
+                            installation.service_load_state
+                            or "unknown"
+                        }}
+                        /
+                        {{
+                            installation.service_active_state
+                            or "unknown"
+                        }}
+                    </dd>
+
+                    <dt>Debian package</dt>
+                    <dd>
+                        {{
+                            installation.package_status
+                            or "Not installed"
+                        }}
+                    </dd>
+                </dl>
+            </div>
+
+            <div class="section">
+                <h2>Proposed action</h2>
+
+                {% if action == "install" %}
+                <div class="note">
+                    SvxLink is not installed. The selected package
+                    will be downloaded, verified and installed before
+                    SvxLink-Dash V4.0 is installed.
+                </div>
+                {% elif action == "retain" %}
+                <div class="success">
+                    The existing package-managed SvxLink 26.05.1
+                    installation will be retained. Its configuration
+                    will be backed up before Dashboard installation.
+                </div>
+                {% elif action == "convert" %}
+                <div class="warning">
+                    A compiler-installed SvxLink was detected. Its
+                    configuration will be backed up, an active service
+                    will be stopped, and the installation will be
+                    converted to the verified Debian package.
+                </div>
+                {% else %}
+                <div class="error">
+                    This installation cannot be processed
+                    automatically. No system changes are permitted
+                    until it has been reviewed manually.
+                </div>
+                {% endif %}
+            </div>
+
+            {% if action != "block" %}
+            <form
+                id="installation-form"
+                action="{{
+                    url_for(
+                        'start_installation',
+                        token=access_token
+                    )
+                }}"
+                method="post"
+            >
+                <input
+                    type="hidden"
+                    name="confirmation_token"
+                    value="{{ confirmation_token }}"
+                >
+
+                <div class="warning">
+                    Installation changes the operating system. Do not
+                    close this page or interrupt power after starting.
+                </div>
+
+                <div class="button-row">
+                    <button
+                        id="install-button"
+                        class="button-primary"
+                        type="submit"
+                    >
+                        Install SvxLink-Dash V4.0
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+
+        <div id="progress-panel" class="hidden">
+            <div class="section">
+                <h2>Installation progress</h2>
+                <p id="progress-message">
+                    Preparing installation…
+                </p>
+
+                <ul class="stage-list">
+                    <li class="stage" data-stage="backup">
+                        <span class="stage-marker"></span>
+                        <span class="stage-label">
+                            Preserve existing configuration
+                        </span>
+                    </li>
+                    <li class="stage" data-stage="download">
+                        <span class="stage-marker"></span>
+                        <span class="stage-label">
+                            Download and verify package
+                        </span>
+                    </li>
+                    <li class="stage" data-stage="service">
+                        <span class="stage-marker"></span>
+                        <span class="stage-label">
+                            Prepare existing SvxLink service
+                        </span>
+                    </li>
+                    <li class="stage" data-stage="package">
+                        <span class="stage-marker"></span>
+                        <span class="stage-label">
+                            Install and verify SvxLink 26.05.1
+                        </span>
+                    </li>
+                    <li class="stage" data-stage="dashboard">
+                        <span class="stage-marker"></span>
+                        <span class="stage-label">
+                            Install SvxLink-Dash V4.0
+                        </span>
+                    </li>
+                    <li class="stage" data-stage="handover">
+                        <span class="stage-marker"></span>
+                        <span class="stage-label">
+                            Open Dashboard configuration
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>Installation log</h2>
+                <pre
+                    id="installation-log"
+                    class="installation-log"
+                    aria-live="polite"
+                ></pre>
+            </div>
+        </div>
+
+        <div id="completion-panel" class="hidden">
+            <div class="success">
+                SvxLink 26.05.1 and SvxLink-Dash V4.0 were
+                installed successfully.
+            </div>
+            <p>
+                This page will now open the Dashboard configuration
+                workflow.
+            </p>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        SvxLink Software &copy; Tobias Blömberg SM0SVX<br>
+        SvxLink-Dash V4.0 and SvxLink-Bootstrap
+        &copy; Chris Jackson G4NAB
+    </footer>
+</main>
+</body>
+</html>
