@@ -13,6 +13,7 @@ from host_detection import HostDetectionError
 from package_download import PackageDownloadError
 from package_selector import NoMatchingPackageError
 from pathlib import Path
+from service_control import ServiceControlError
 
 HOST = {
     "platform": "raspberry_pi",
@@ -39,6 +40,24 @@ PACKAGE = {
     ),
 }
 
+COMPILER_INSTALLATION = {
+    "present": True,
+    "installation_type": "compiler",
+    "version": "1.9.99.36@13.12.1-1903-g8515694c",
+    "version_source": "embedded",
+    "runtime_healthy": False,
+    "runtime_error": (
+        "libsigc-2.0.so.0: cannot open shared object file"
+    ),
+    "executable": "/usr/bin/svxlink",
+    "canonical_executable": "/usr/bin/svxlink",
+    "service_load_state": "loaded",
+    "service_active_state": "active",
+    "package_status": "",
+    "supported_version": False,
+    "package_managed": False,
+    "conversion_candidate": True,
+}
 
 class BootstrapTests(unittest.TestCase):
     @patch(
@@ -386,6 +405,102 @@ class BootstrapTests(unittest.TestCase):
         installation_mock.assert_called_once_with()
         resolve_mock.assert_called_once_with()
 
+    def test_conversion_stops_active_service_before_install(self):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        with (
+            patch("bootstrap.require_root") as root_mock,
+            patch(
+                "bootstrap.backup_existing_configuration",
+                return_value=Path("/var/backups/test"),
+            ) as backup_mock,
+            patch(
+                "bootstrap.download_package",
+                return_value=Path("/tmp/svxlink.deb"),
+            ) as download_mock,
+            patch(
+                "bootstrap.stop_svxlink_service_if_active",
+                return_value=True,
+            ) as stop_mock,
+            patch(
+                "bootstrap.install_package"
+            ) as install_mock,
+            patch(
+                "bootstrap.install_dashboard",
+                return_value=Path("/opt/dashboard"),
+            ) as dashboard_mock,
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            result = bootstrap.perform_installation(
+                PACKAGE,
+                COMPILER_INSTALLATION,
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stderr.getvalue(), "")
+        self.assertIn(
+            "active SvxLink service has been stopped",
+            stdout.getvalue(),
+        )
+        root_mock.assert_called_once_with()
+        backup_mock.assert_called_once_with()
+        download_mock.assert_called_once()
+        stop_mock.assert_called_once_with(
+            COMPILER_INSTALLATION
+        )
+        install_mock.assert_called_once_with(
+            Path("/tmp/svxlink.deb")
+        )
+        dashboard_mock.assert_called_once_with()
+
+    def test_conversion_stops_when_service_cannot_be_stopped(
+        self,
+    ):
+        stdout = StringIO()
+        stderr = StringIO()
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.backup_existing_configuration",
+                return_value=Path("/var/backups/test"),
+            ),
+            patch(
+                "bootstrap.download_package",
+                return_value=Path("/tmp/svxlink.deb"),
+            ),
+            patch(
+                "bootstrap.stop_svxlink_service_if_active",
+                side_effect=ServiceControlError(
+                    "Could not stop svxlink.service."
+                ),
+            ) as stop_mock,
+            patch(
+                "bootstrap.install_package"
+            ) as install_mock,
+            patch(
+                "bootstrap.install_dashboard"
+            ) as dashboard_mock,
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            result = bootstrap.perform_installation(
+                PACKAGE,
+                COMPILER_INSTALLATION,
+            )
+
+        self.assertEqual(result, 9)
+        self.assertIn(
+            "Service control failed",
+            stderr.getvalue(),
+        )
+        stop_mock.assert_called_once_with(
+            COMPILER_INSTALLATION
+        )
+        install_mock.assert_not_called()
+        dashboard_mock.assert_not_called()
 
 if __name__ == "__main__":
     unittest.main()

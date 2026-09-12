@@ -46,6 +46,11 @@ from package_installation import (
     install_package,
 )
 
+from service_control import (
+    ServiceControlError,
+    stop_svxlink_service_if_active,
+)
+
 from system_access import (
     RootAccessRequiredError,
     require_root,
@@ -278,9 +283,22 @@ def perform_installation(package, installation):
                     download_directory,
                 )
 
-                print("SvxLink package downloaded and verified:")
                 print(package_path)
                 print()
+
+                if action == "convert":
+                    service_stopped = (
+                        stop_svxlink_service_if_active(
+                            installation
+                        )
+                    )
+
+                    if service_stopped:
+                        print(
+                            "The active SvxLink service "
+                            "has been stopped."
+                        )
+                        print()
 
                 install_package(package_path)
 
@@ -290,6 +308,13 @@ def perform_installation(package, installation):
                 file=sys.stderr,
             )
             return 3
+
+        except ServiceControlError as exc:
+            print(
+                f"Service control failed: {exc}",
+                file=sys.stderr,
+            )
+            return 9
 
         except PackageInstallationError as exc:
             print(
