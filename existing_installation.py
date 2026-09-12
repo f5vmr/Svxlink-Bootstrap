@@ -13,9 +13,14 @@ from pathlib import Path
 
 SUPPORTED_SVXLINK_VERSION = "26.05.1"
 
+EMBEDDED_VERSION_PATTERN = re.compile(
+    rb"SvxLink v"
+    rb"([0-9]+(?:\.[0-9]+){2,}"
+    rb"(?:@[0-9A-Za-z.+_-]+)?)"
+)
 
-def run_command(command):
-    """Return stripped command output, or an empty string."""
+def run_command_result(command):
+    """Return the complete result of a read-only command."""
 
     try:
         result = subprocess.run(
@@ -24,30 +29,114 @@ def run_command(command):
             text=True,
             capture_output=True,
         )
-    except OSError:
+    except OSError as exc:
+        return {
+            "returncode": None,
+            "stdout": "",
+            "stderr": str(exc),
+        }
+
+    return {
+        "returncode": result.returncode,
+        "stdout": result.stdout.strip(),
+        "stderr": result.stderr.strip(),
+    }
+
+
+def run_command(command):
+    """Return successful command output, or an empty string."""
+
+    result = run_command_result(command)
+
+    if result["returncode"] != 0:
         return ""
 
-    if result.returncode != 0:
-        return ""
-
-    return result.stdout.strip()
+    return result["stdout"]
 
 
-def detect_svxlink_version(executable):
-    """Return the version text reported by an executable."""
+def detect_embedded_version(executable):
+    """Return an SvxLink version embedded in an executable."""
 
     if not executable:
         return ""
 
-    output = run_command([
+    try:
+        content = Path(executable).read_bytes()
+    except OSError:
+        return ""
+
+    match = EMBEDDED_VERSION_PATTERN.search(content)
+
+    if not match:
+        return ""
+
+    return match.group(1).decode(
+        "ascii",
+        errors="ignore",
+    )
+
+
+def inspect_svxlink_executable(executable):
+    """Inspect the executable and retain runtime failure details."""
+
+    if not executable:
+        return {
+            "version": "",
+            "version_source": "",
+            "runtime_healthy": False,
+            "runtime_error": "",
+        }
+
+    result = run_command_result([
         executable,
         "--version",
     ])
 
-    if not output:
-        return ""
+    if result["returncode"] == 0:
+        output = (
+            result["stdout"]
+            or result["stderr"]
+        )
 
-    return output.splitlines()[0].strip()
+        version = ""
+
+        if output:
+            version = output.splitlines()[0].strip()
+
+        return {
+            "version": version,
+            "version_source": (
+                "executable" if version else ""
+            ),
+            "runtime_healthy": True,
+            "runtime_error": "",
+        }
+
+    embedded_version = detect_embedded_version(
+        executable
+    )
+
+    runtime_error = (
+        result["stderr"]
+        or result["stdout"]
+    )
+
+    return {
+        "version": embedded_version,
+        "version_source": (
+            "embedded" if embedded_version else ""
+        ),
+        "runtime_healthy": False,
+        "runtime_error": runtime_error,
+    }
+
+
+def detect_svxlink_version(executable):
+    """Return the reported or embedded SvxLink version."""
+
+    return inspect_svxlink_executable(
+        executable
+    )["version"]
 
 
 def version_is_supported(version_text):

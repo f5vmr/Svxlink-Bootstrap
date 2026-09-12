@@ -10,6 +10,8 @@ from existing_installation import (
     detect_existing_installation,
     detect_service,
     version_is_supported,
+    detect_embedded_version,
+    inspect_svxlink_executable,
 )
 
 
@@ -242,6 +244,116 @@ class ExistingInstallationTests(unittest.TestCase):
             },
         )
 
+    def test_embedded_version_is_detected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / "svxlink"
+            executable.write_bytes(
+                b"\x00unrelated\x00"
+                b"SvxLink v1.9.99.36@13.12.1-1903-g8515694c "
+                b"Copyright\x00"
+            )
+
+            version = detect_embedded_version(
+                executable
+            )
+
+        self.assertEqual(
+            version,
+            "1.9.99.36@13.12.1-1903-g8515694c",
+        )
+
+    def test_missing_embedded_version_returns_empty(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / "svxlink"
+            executable.write_bytes(
+                b"\x00no version information\x00"
+            )
+
+            version = detect_embedded_version(
+                executable
+            )
+
+        self.assertEqual(version, "")
+
+    @patch(
+        "existing_installation.run_command_result",
+        return_value={
+            "returncode": 0,
+            "stdout": "1.10.1@26.05.1",
+            "stderr": "",
+        },
+    )
+    def test_healthy_executable_reports_version(
+        self,
+        command_mock,
+    ):
+        result = inspect_svxlink_executable(
+            "/usr/bin/svxlink"
+        )
+
+        self.assertEqual(
+            result["version"],
+            "1.10.1@26.05.1",
+        )
+        self.assertEqual(
+            result["version_source"],
+            "executable",
+        )
+        self.assertTrue(result["runtime_healthy"])
+        self.assertEqual(result["runtime_error"], "")
+        command_mock.assert_called_once_with([
+            "/usr/bin/svxlink",
+            "--version",
+        ])
+
+    @patch(
+        "existing_installation.detect_embedded_version",
+        return_value=(
+            "1.9.99.36@13.12.1-1903-g8515694c"
+        ),
+    )
+    @patch(
+        "existing_installation.run_command_result",
+        return_value={
+            "returncode": 127,
+            "stdout": "",
+            "stderr": (
+                "error while loading shared libraries: "
+                "libsigc-2.0.so.0: cannot open shared "
+                "object file"
+            ),
+        },
+    )
+
+    def test_broken_executable_uses_embedded_version(
+        self,
+        command_mock,
+        embedded_mock,
+    ):
+        result = inspect_svxlink_executable(
+            "/usr/bin/svxlink"
+        )
+
+        self.assertEqual(
+            result["version"],
+            "1.9.99.36@13.12.1-1903-g8515694c",
+        )
+        self.assertEqual(
+            result["version_source"],
+            "embedded",
+        )
+        self.assertFalse(result["runtime_healthy"])
+        self.assertIn(
+            "libsigc-2.0.so.0",
+            result["runtime_error"],
+        )
+        command_mock.assert_called_once_with([
+            "/usr/bin/svxlink",
+            "--version",
+        ])
+        embedded_mock.assert_called_once_with(
+            "/usr/bin/svxlink"
+        )
 
 if __name__ == "__main__":
     unittest.main()
