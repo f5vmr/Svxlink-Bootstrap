@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from web_manager import create_app
+from web_manager import (
+    create_app,
+    determine_local_address,
+    main as web_manager_main,
+)
 from web_installation import (
     InstallationAlreadyStartedError,
     InstallationState,
@@ -285,6 +289,72 @@ class WebManagerTests(unittest.TestCase):
             INSTALLATION,
             self.dashboard_url,
         )
+
+    @patch("web_manager.socket.socket")
+    def test_local_address_uses_default_route(
+        self,
+        socket_mock,
+    ):
+        probe = Mock()
+        probe.getsockname.return_value = (
+            "192.0.2.25",
+            49152,
+        )
+        socket_mock.return_value.__enter__.return_value = (
+            probe
+        )
+
+        address = determine_local_address()
+
+        self.assertEqual(address, "192.0.2.25")
+        probe.connect.assert_called_once_with(
+            ("192.0.2.1", 9)
+        )
+
+    @patch("web_manager.create_app")
+    @patch(
+        "web_manager.determine_local_address",
+        return_value="192.0.2.25",
+    )
+    @patch(
+        "web_manager.secrets.token_urlsafe",
+        side_effect=[
+            "access-token",
+            "confirmation-token",
+        ],
+    )
+    def test_main_starts_temporary_manager(
+        self,
+        token_mock,
+        address_mock,
+        create_app_mock,
+    ):
+        app = Mock()
+        create_app_mock.return_value = app
+
+        result = web_manager_main(
+            bind_address="0.0.0.0",
+            port=8765,
+        )
+
+        self.assertEqual(result, 0)
+        create_app_mock.assert_called_once_with(
+            access_token="access-token",
+            confirmation_token="confirmation-token",
+            dashboard_url=(
+                "http:"
+                "//192.0.2.25:5000/start"
+            ),
+        )
+        app.run.assert_called_once_with(
+            host="0.0.0.0",
+            port=8765,
+            debug=False,
+            use_reloader=False,
+            threaded=True,
+        )
+        self.assertEqual(token_mock.call_count, 2)
+        address_mock.assert_called_once_with()
 
 
 if __name__ == "__main__":
