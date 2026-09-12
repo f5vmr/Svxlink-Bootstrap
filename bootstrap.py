@@ -220,8 +220,26 @@ def describe_existing_installation(installation):
         ])
 
     return "\n".join(details)
+def report_installation_progress(
+    progress,
+    stage,
+    status,
+    message,
+):
+    """Send an installation progress event when requested."""
 
-def perform_installation(package, installation):
+    if progress is not None:
+        progress(
+            stage,
+            status,
+            message,
+        )
+
+def perform_installation(
+    package,
+    installation,
+    progress=None,
+):
     """Install or convert SvxLink, then install the dashboard."""
 
     action = determine_installation_action(
@@ -243,6 +261,12 @@ def perform_installation(package, installation):
         return 5
 
     if action in {"retain", "convert"}:
+        report_installation_progress(
+            progress,
+            "backup",
+            "running",
+            "Backing up the existing SvxLink configuration.",
+        )
         print(
             "WARNING: An existing SvxLink installation "
             "was detected."
@@ -256,6 +280,12 @@ def perform_installation(package, installation):
         try:
             backup_path = backup_existing_configuration()
         except ConfigurationBackupError as exc:
+            report_installation_progress(
+                progress,
+                "backup",
+                "failed",
+                str(exc),
+            )
             print(
                 f"Configuration backup failed: {exc}",
                 file=sys.stderr,
@@ -265,7 +295,22 @@ def perform_installation(package, installation):
         print("Existing SvxLink configuration backed up:")
         print(backup_path)
         print()
-
+        report_installation_progress(
+            progress,
+            "backup",
+            "completed",
+            (
+                "Existing configuration backed up to "
+                f"{backup_path}."
+            ),
+        )
+    else:
+        report_installation_progress(
+            progress,
+            "backup",
+            "skipped",
+            "No existing configuration requires backup.",
+        )
     if action in {"install", "convert"}:
         if action == "convert":
             print(

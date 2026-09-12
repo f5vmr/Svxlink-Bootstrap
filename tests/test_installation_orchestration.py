@@ -8,7 +8,7 @@ from contextlib import (
 )
 from io import StringIO
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
 import bootstrap
 
@@ -47,7 +47,11 @@ COMPILER_INSTALLATION = {
 
 
 class InstallationOrchestrationTests(unittest.TestCase):
-    def run_installation(self, installation):
+    def run_installation(
+        self,
+        installation,
+        progress=None,
+    ):
         stdout = StringIO()
         stderr = StringIO()
 
@@ -58,6 +62,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
             result = bootstrap.perform_installation(
                 PACKAGE,
                 installation,
+                progress=progress,
             )
 
         return result, stdout.getvalue(), stderr.getvalue()
@@ -98,6 +103,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
         backup_path = Path(
             "/var/backups/svxlink-bootstrap/20260911-220000"
         )
+        progress_mock = Mock()
 
         with (
             patch("bootstrap.require_root"),
@@ -117,7 +123,8 @@ class InstallationOrchestrationTests(unittest.TestCase):
             ) as dashboard_mock,
         ):
             result, stdout, stderr = self.run_installation(
-                EXISTING_SUPPORTED
+                EXISTING_SUPPORTED,
+                progress=progress_mock,
             )
 
         self.assertEqual(result, 0)
@@ -131,6 +138,27 @@ class InstallationOrchestrationTests(unittest.TestCase):
             stdout,
         )
         backup_mock.assert_called_once_with()
+        self.assertEqual(
+            progress_mock.call_args_list[:2],
+            [
+                call(
+                    "backup",
+                    "running",
+                    (
+                        "Backing up the existing SvxLink "
+                        "configuration."
+                    ),
+                ),
+                call(
+                    "backup",
+                    "completed",
+                    (
+                        "Existing configuration backed up to "
+                        f"{backup_path}."
+                    ),
+                ),
+            ],
+        )
         download_mock.assert_not_called()
         package_install_mock.assert_not_called()
         dashboard_mock.assert_called_once_with()
