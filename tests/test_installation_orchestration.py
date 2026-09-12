@@ -159,6 +159,14 @@ class InstallationOrchestrationTests(unittest.TestCase):
                 ),
             ],
         )
+        progress_mock.assert_any_call(
+            "download",
+            "skipped",
+            (
+                "The installed SvxLink package is already "
+                "current."
+            ),
+        )
         download_mock.assert_not_called()
         package_install_mock.assert_not_called()
         dashboard_mock.assert_called_once_with()
@@ -243,7 +251,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
         package_path = Path(
             "/tmp/download/svxlink_26.05.1_amd64.deb"
         )
-
+        progress_mock = Mock()
         with (
             patch("bootstrap.require_root"),
             patch(
@@ -259,7 +267,8 @@ class InstallationOrchestrationTests(unittest.TestCase):
             ) as dashboard_mock,
         ):
             result, stdout, stderr = self.run_installation(
-                NOT_INSTALLED
+                NOT_INSTALLED,
+                progress=progress_mock,
             )
 
         self.assertEqual(result, 0)
@@ -268,7 +277,35 @@ class InstallationOrchestrationTests(unittest.TestCase):
             "SvxLink 26.05.1 installed successfully",
             stdout,
         )
-
+        self.assertEqual(
+            progress_mock.call_args_list[:3],
+            [
+                call(
+                    "backup",
+                    "skipped",
+                    (
+                        "No existing configuration requires "
+                        "backup."
+                    ),
+                ),
+                call(
+                    "download",
+                    "running",
+                    (
+                        "Downloading and verifying the "
+                        "SvxLink package."
+                    ),
+                ),
+                call(
+                    "download",
+                    "completed",
+                    (
+                        "SvxLink package downloaded and "
+                        "verified."
+                    ),
+                ),
+            ],
+        )
         download_mock.assert_called_once()
         self.assertEqual(
             download_mock.call_args.args[0],
@@ -280,6 +317,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
         dashboard_mock.assert_called_once_with()
 
     def test_package_download_failure_stops_installation(self):
+        progress_mock = Mock()
         with (
             patch("bootstrap.require_root"),
             patch(
@@ -296,13 +334,32 @@ class InstallationOrchestrationTests(unittest.TestCase):
             ) as dashboard_mock,
         ):
             result, stdout, stderr = self.run_installation(
-                NOT_INSTALLED
+                NOT_INSTALLED,
+                progress=progress_mock,
             )
 
         self.assertEqual(result, 3)
         self.assertIn(
             "Package download failed",
             stderr,
+        )
+        self.assertEqual(
+            progress_mock.call_args_list[-2:],
+            [
+                call(
+                    "download",
+                    "running",
+                    (
+                        "Downloading and verifying the "
+                        "SvxLink package."
+                    ),
+                ),
+                call(
+                    "download",
+                    "failed",
+                    "Checksum mismatch.",
+                ),
+            ],
         )
         package_install_mock.assert_not_called()
         dashboard_mock.assert_not_called()

@@ -323,11 +323,25 @@ def perform_installation(
             with tempfile.TemporaryDirectory(
                 prefix="svxlink-bootstrap-package-"
             ) as download_directory:
+                report_installation_progress(
+                    progress,
+                    "download",
+                    "running",
+                    "Downloading and verifying the SvxLink package.",
+                )
                 package_path = download_package(
                     package,
                     download_directory,
                 )
-
+                report_installation_progress(
+                    progress,
+                    "download",
+                    "completed",
+                    (
+                        "SvxLink package downloaded and "
+                        "verified."
+                    ),
+                )
                 print(package_path)
                 print()
 
@@ -348,6 +362,12 @@ def perform_installation(
                 install_package(package_path)
 
         except PackageDownloadError as exc:
+            report_installation_progress(
+                progress,
+                "download",
+                "failed",
+                str(exc),
+            )
             print(
                 f"Package download failed: {exc}",
                 file=sys.stderr,
@@ -372,6 +392,15 @@ def perform_installation(
         print()
 
     else:
+        report_installation_progress(
+            progress,
+            "download",
+            "skipped",
+            (
+                "The installed SvxLink package is already "
+                "current."
+            ),
+        )
         print(
             "The package-managed SvxLink 26.05.1 "
             "installation will be retained."
