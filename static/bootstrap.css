@@ -221,7 +221,13 @@ p + p {
   background: var(--pending-color);
   border-radius: 50%;
 }
+.stage.skipped {
+  opacity: 0.65;
+}
 
+.stage.skipped .stage-marker {
+  background: var(--pending-color);
+}
 .stage.running {
   border-color: var(--highlight-color);
 }

@@ -17,7 +17,15 @@
     >
 </head>
 <body>
-<main class="page">
+<main
+    class="page"
+    data-status-url="{{
+        url_for(
+            'installation_status',
+            token=access_token
+        )
+    }}"
+>
     <section class="card">
         <div class="page-header">
             <img
@@ -175,7 +183,11 @@
                     Installation changes the operating system. Do not
                     close this page or interrupt power after starting.
                 </div>
-
+                <div
+                    id="request-error"
+                    class="error hidden"
+                    role="alert"
+                ></div>
                 <div class="button-row">
                     <button
                         id="install-button"
@@ -264,5 +276,8 @@
         &copy; Chris Jackson G4NAB
     </footer>
 </main>
+<script
+    src="{{ url_for('static', filename='bootstrap.js') }}"
+></script>
 </body>
 </html>

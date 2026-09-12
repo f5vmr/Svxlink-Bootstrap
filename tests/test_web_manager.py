@@ -88,6 +88,14 @@ class WebManagerTests(unittest.TestCase):
             b"Install SvxLink-Dash V4.0",
             response.data,
         )
+        self.assertIn(
+            b"bootstrap.js",
+            response.data,
+        )
+        self.assertIn(
+            b"/status?token=test-access-token",
+            response.data,
+        )
         resolve_mock.assert_called_once_with()
         installation_mock.assert_called_once_with()
         action_mock.assert_called_once_with(
