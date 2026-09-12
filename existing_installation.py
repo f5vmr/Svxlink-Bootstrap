@@ -199,6 +199,29 @@ def detect_package_status():
     ])
 
 
+def svxlink_package_owns_file(file_path):
+    """Return True when a file is owned by the svxlink package."""
+
+    dpkg_query = shutil.which("dpkg-query")
+
+    if not dpkg_query:
+        return False
+
+    ownership = run_command([
+        dpkg_query,
+        "--search",
+        str(file_path),
+    ])
+
+    return any(
+        re.match(
+            r"^svxlink(?:\:[^:\s]+)?:\s+",
+            line,
+        )
+        for line in ownership.splitlines()
+    )
+
+
 def svxlink_user_exists():
     """Return True when the svxlink account exists."""
 

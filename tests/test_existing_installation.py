@@ -14,6 +14,7 @@ from existing_installation import (
     inspect_svxlink_executable,
     classify_installation,
     package_status_is_installed,
+    svxlink_package_owns_file,
     determine_installation_action,
 )
 
@@ -41,6 +42,85 @@ class ExistingInstallationTests(unittest.TestCase):
                 "rc  svxlink 25.05.1"
             )
         )
+
+    @patch(
+        "existing_installation.run_command",
+        return_value="svxlink: /usr/bin/svxlink",
+    )
+    @patch(
+        "existing_installation.shutil.which",
+        return_value="/usr/bin/dpkg-query",
+    )
+    def test_svxlink_package_ownership_is_recognised(
+        self,
+        which_mock,
+        command_mock,
+    ):
+        self.assertTrue(
+            svxlink_package_owns_file(
+                "/usr/bin/svxlink"
+            )
+        )
+        which_mock.assert_called_once_with("dpkg-query")
+        command_mock.assert_called_once_with([
+            "/usr/bin/dpkg-query",
+            "--search",
+            "/usr/bin/svxlink",
+        ])
+
+    @patch(
+        "existing_installation.run_command",
+        return_value=(
+            "svxlink:amd64: /usr/bin/svxlink"
+        ),
+    )
+    @patch(
+        "existing_installation.shutil.which",
+        return_value="/usr/bin/dpkg-query",
+    )
+    def test_architecture_qualified_ownership_is_recognised(
+        self,
+        which_mock,
+        command_mock,
+    ):
+        self.assertTrue(
+            svxlink_package_owns_file(
+                "/usr/bin/svxlink"
+            )
+        )
+        which_mock.assert_called_once_with("dpkg-query")
+        command_mock.assert_called_once_with([
+            "/usr/bin/dpkg-query",
+            "--search",
+            "/usr/bin/svxlink",
+        ])
+
+    @patch(
+        "existing_installation.run_command",
+        return_value=(
+            "another-package: /usr/bin/svxlink"
+        ),
+    )
+    @patch(
+        "existing_installation.shutil.which",
+        return_value="/usr/bin/dpkg-query",
+    )
+    def test_other_package_ownership_is_rejected(
+        self,
+        which_mock,
+        command_mock,
+    ):
+        self.assertFalse(
+            svxlink_package_owns_file(
+                "/usr/bin/svxlink"
+            )
+        )
+        which_mock.assert_called_once_with("dpkg-query")
+        command_mock.assert_called_once_with([
+            "/usr/bin/dpkg-query",
+            "--search",
+            "/usr/bin/svxlink",
+        ])
 
     def test_package_installation_is_classified(self):
         result = classify_installation({
