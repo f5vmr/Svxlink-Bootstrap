@@ -45,7 +45,7 @@ NOT_INSTALLED = {
 }
 
 
-COMPILER_INSTALLATION = {
+UNSUPPORTED_COMPILER_INSTALLATION = {
     "present": True,
     "supported_version": False,
     "package_managed": False,
@@ -156,13 +156,13 @@ class CommandLineTests(unittest.TestCase):
     )
     @patch(
         "bootstrap.detect_existing_installation",
-        return_value=COMPILER_INSTALLATION,
+        return_value=UNSUPPORTED_COMPILER_INSTALLATION,
     )
     @patch(
         "bootstrap.resolve_host_package",
         return_value=(HOST, PACKAGE),
     )
-    def test_compiler_installation_reaches_conversion(
+    def test_unsupported_compiler_installation_is_blocked(
         self,
         resolve_mock,
         installation_mock,
@@ -173,19 +173,17 @@ class CommandLineTests(unittest.TestCase):
         with redirect_stdout(stdout):
             result = bootstrap.main(install=True)
 
-        self.assertEqual(result, 0)
+        self.assertEqual(result, 4)
         self.assertIn(
-            "compiler installation",
+            "Installation type: compiler",
             stdout.getvalue(),
         )
         self.assertIn(
             "libsigc-2.0.so.0",
             stdout.getvalue(),
         )
-        perform_mock.assert_called_once_with(
-            PACKAGE,
-            COMPILER_INSTALLATION,
-        )
+        perform_mock.assert_not_called()
+
         installation_mock.assert_called_once_with()
         resolve_mock.assert_called_once_with()
 

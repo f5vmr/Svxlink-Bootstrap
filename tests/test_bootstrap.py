@@ -43,18 +43,16 @@ PACKAGE = {
 COMPILER_INSTALLATION = {
     "present": True,
     "installation_type": "compiler",
-    "version": "1.9.99.36@13.12.1-1903-g8515694c",
-    "version_source": "embedded",
-    "runtime_healthy": False,
-    "runtime_error": (
-        "libsigc-2.0.so.0: cannot open shared object file"
-    ),
+    "version": "1.10.1@26.05.1",
+    "version_source": "executable",
+    "runtime_healthy": True,
+    "runtime_error": "",
     "executable": "/usr/bin/svxlink",
     "canonical_executable": "/usr/bin/svxlink",
     "service_load_state": "loaded",
     "service_active_state": "active",
     "package_status": "",
-    "supported_version": False,
+    "supported_version": True,
     "package_managed": False,
     "conversion_candidate": True,
 }

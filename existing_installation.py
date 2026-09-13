@@ -317,7 +317,10 @@ def determine_installation_action(installation):
     ):
         return "retain"
 
-    if installation["conversion_candidate"]:
+    if (
+        installation["conversion_candidate"]
+        and installation["supported_version"]
+    ):
         return "convert"
 
     return "block"

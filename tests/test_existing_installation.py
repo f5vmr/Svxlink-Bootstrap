@@ -170,15 +170,15 @@ class ExistingInstallationTests(unittest.TestCase):
 
         self.assertEqual(action, "convert")
 
-    def test_older_compiler_installation_is_converted(self):
+    def test_older_or_unknown_compiler_installation_is_blocked(self):
         action = determine_installation_action({
             "present": True,
             "package_managed": False,
             "supported_version": False,
             "conversion_candidate": True,
         })
+        self.assertEqual(action, "block")
 
-        self.assertEqual(action, "convert")
 
     def test_unrecognised_installation_is_blocked(self):
         action = determine_installation_action({
