@@ -49,6 +49,13 @@ class PackageSelectorTests(unittest.TestCase):
                 "raspberry_pi_bookworm_armhf",
             ),
             (
+                "nanopi_neo",
+                "debian",
+                "trixie",
+                "armhf",
+                "nanopi_neo_trixie_armhf",
+            ),
+            (
                 "debian",
                 "debian",
                 "bookworm",

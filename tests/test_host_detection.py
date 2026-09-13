@@ -88,7 +88,7 @@ class HostDetectionTests(unittest.TestCase):
             ),
             (
                 "debian",
-                "FriendlyElec NanoPi NEO",
+                "FriendlyARM NanoPi NEO",
                 "nanopi_neo",
             ),
             (
