@@ -16,6 +16,7 @@ from existing_installation import (
     package_status_is_installed,
     svxlink_package_owns_file,
     determine_installation_action,
+    compiler_version_is_replaceable,
 )
 
 
@@ -27,6 +28,36 @@ class ExistingInstallationTests(unittest.TestCase):
                 "1.10.1@26.05.1"
             )
         )
+
+    def test_replaceable_compiler_release_years_are_recognised(self):
+        versions = [
+            "1.5.0@17.12.2",
+            "1.8.0@19.09",
+            "1.9.0@24.02",
+            "1.9.0@25.05.1",
+            "1.10.1@26.05.1",
+        ]
+        for version in versions:
+            with self.subTest(version=version):
+                self.assertTrue(
+                    compiler_version_is_replaceable(version)
+                )
+
+    def test_other_compiler_release_years_are_rejected(self):
+        versions = [
+            "",
+            "1.10.1",
+            "1.9.99.36@13.12.1-1903-g8515694c",
+            "1.9.99@14.08",
+            "1.9.99@15.11",
+            "1.10.1@27.01",
+            "1.10.1@260.05.1",
+        ]
+        for version in versions:
+            with self.subTest(version=version):
+                self.assertFalse(
+                    compiler_version_is_replaceable(version)
+                )
 
     def test_installed_package_status_is_recognised(self):
         self.assertTrue(
@@ -160,17 +191,28 @@ class ExistingInstallationTests(unittest.TestCase):
 
         self.assertEqual(action, "retain")
 
+    def test_catalogued_older_compiler_installation_is_converted(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": False,
+            "supported_version": False,
+            "conversion_candidate": True,
+            "version": "1.9.0@25.05.1",
+        })
+        self.assertEqual(action, "convert")
+
     def test_current_compiler_installation_is_converted(self):
         action = determine_installation_action({
             "present": True,
             "package_managed": False,
             "supported_version": True,
             "conversion_candidate": True,
+            "version": "1.10.1@26.05.1",
         })
 
         self.assertEqual(action, "convert")
 
-    def test_older_or_unknown_compiler_installation_is_blocked(self):
+    def test_unknown_compiler_installation_is_blocked(self):
         action = determine_installation_action({
             "present": True,
             "package_managed": False,

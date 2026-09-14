@@ -40,6 +40,7 @@ NOT_INSTALLED = {
 
 COMPILER_INSTALLATION = {
     "present": True,
+    "version": "1.10.1@26.05.1",
     "supported_version": True,
     "package_managed": False,
     "conversion_candidate": True,

@@ -13,6 +13,14 @@ from pathlib import Path
 
 SUPPORTED_SVXLINK_VERSION = "26.05.1"
 
+REPLACEABLE_COMPILER_RELEASE_YEARS = frozenset({
+    "17",
+    "19",
+    "24",
+    "25",
+    "26",
+})
+
 EMBEDDED_VERSION_PATTERN = re.compile(
     rb"SvxLink v"
     rb"([0-9]+(?:\.[0-9]+){2,}"
@@ -149,6 +157,23 @@ def version_is_supported(version_text):
         )
     )
 
+def compiler_version_is_replaceable(version_text):
+    """
+    Return True for an identified compiler release that may be replaced.
+
+    SvxLink versions contain the software version followed by the
+    release version, for example 1.10.1@26.05.1. Replacement policy
+    applies to the release year after the @ character.
+    """
+    match = re.search(
+        r"@(\d{2})(?=\.|$)",
+        str(version_text or ""),
+    )
+    return bool(
+        match
+        and match.group(1)
+        in REPLACEABLE_COMPILER_RELEASE_YEARS
+    )
 
 def detect_service():
     """Return the systemd load and active states."""
@@ -319,7 +344,9 @@ def determine_installation_action(installation):
 
     if (
         installation["conversion_candidate"]
-        and installation["supported_version"]
+        and compiler_version_is_replaceable(
+            installation.get("version", "")
+        )
     ):
         return "convert"
 
