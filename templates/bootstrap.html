@@ -147,12 +147,23 @@
                     will be backed up before Dashboard installation.
                 </div>
                 {% elif action == "convert" %}
+                    {% if installation.supported_version %}
                 <div class="warning">
-                    A compiler-installed SvxLink was detected. Its
-                    configuration will be backed up, an active service
-                    will be stopped, and the installation will be
-                    converted to the verified Debian package.
+                    A compiler-installed SvxLink 26.05.1 was detected.
+                    Its configuration will be backed up, an active
+                    service will be stopped, and the installation will
+                    be converted to the verified Debian package.
                 </div>
+                    {% else %}
+                <div class="warning">
+                    A recognised older compiler-installed SvxLink
+                    release was detected: {{ installation.version }}.
+                    Its configuration will be backed up, an active
+                    service will be stopped, and the installation will
+                    be upgraded to the verified SvxLink 26.05.1 Debian
+                    package.
+                </div>
+                    {% endif %}
                 {% else %}
                 <div class="error">
                     This installation cannot be processed
