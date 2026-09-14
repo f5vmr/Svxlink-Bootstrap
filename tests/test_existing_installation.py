@@ -221,7 +221,6 @@ class ExistingInstallationTests(unittest.TestCase):
         })
         self.assertEqual(action, "block")
 
-
     def test_unrecognised_installation_is_blocked(self):
         action = determine_installation_action({
             "present": True,
@@ -322,6 +321,46 @@ class ExistingInstallationTests(unittest.TestCase):
         self.assertFalse(
             result["supported_version"]
         )
+        self.assertEqual(
+            result["installation_type"],
+            "absent",
+        )
+
+    @patch(
+        "existing_installation.svxlink_user_exists",
+        return_value=True,
+    )
+    @patch(
+        "existing_installation.detect_package_status",
+        return_value="",
+    )
+    @patch(
+        "existing_installation.detect_service",
+        return_value={
+            "load_state": "not-found",
+            "active_state": "inactive",
+        },
+    )
+    @patch(
+        "existing_installation.shutil.which",
+        return_value=None,
+    )
+    def test_user_account_alone_is_not_an_installation(
+        self,
+        which_mock,
+        service_mock,
+        package_mock,
+        user_mock,
+    ):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            result = detect_existing_installation(
+                config_directory=base / "svxlink",
+                default_file=base / "default-svxlink",
+            )
+
+        self.assertTrue(result["user_exists"])
+        self.assertFalse(result["present"])
         self.assertEqual(
             result["installation_type"],
             "absent",
@@ -622,7 +661,6 @@ class ExistingInstallationTests(unittest.TestCase):
             ),
         },
     )
-
     def test_broken_executable_uses_embedded_version(
         self,
         command_mock,
@@ -652,6 +690,7 @@ class ExistingInstallationTests(unittest.TestCase):
         embedded_mock.assert_called_once_with(
             "/usr/bin/svxlink"
         )
+
 
 if __name__ == "__main__":
     unittest.main()

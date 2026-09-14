@@ -25,6 +25,7 @@ EMBEDDED_VERSION_PATTERN = re.compile(
     rb"(?:@[0-9A-Za-z.+_-]+)?)"
 )
 
+
 def run_command_result(command):
     """Return the complete result of a read-only command."""
 
@@ -155,6 +156,7 @@ def version_is_supported(version_text):
         )
     )
 
+
 def compiler_version_is_replaceable(version_text):
     """
     Return True for an identified compiler release that may be replaced.
@@ -172,6 +174,7 @@ def compiler_version_is_replaceable(version_text):
         and match.group(1)
         in REPLACEABLE_COMPILER_RELEASE_YEARS
     )
+
 
 def detect_service():
     """Return the systemd load and active states."""
@@ -254,6 +257,7 @@ def svxlink_user_exists():
         return False
 
     return True
+
 
 def package_status_is_installed(package_status):
     """Return True for an installed SvxLink Debian package."""
@@ -401,7 +405,6 @@ def detect_existing_installation(
         bool(evidence["executable"]),
         evidence["service_load_state"] == "loaded",
         bool(evidence["package_status"]),
-        evidence["user_exists"],
         evidence["config_directory_exists"],
         evidence["default_file_exists"],
     ])
