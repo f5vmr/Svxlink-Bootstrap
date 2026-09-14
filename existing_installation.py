@@ -14,8 +14,6 @@ from pathlib import Path
 SUPPORTED_SVXLINK_VERSION = "26.05.1"
 
 REPLACEABLE_COMPILER_RELEASE_YEARS = frozenset({
-    "17",
-    "19",
     "24",
     "25",
     "26",

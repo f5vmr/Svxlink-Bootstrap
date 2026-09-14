@@ -31,8 +31,6 @@ class ExistingInstallationTests(unittest.TestCase):
 
     def test_replaceable_compiler_release_years_are_recognised(self):
         versions = [
-            "1.5.0@17.12.2",
-            "1.8.0@19.09",
             "1.9.0@24.02",
             "1.9.0@25.05.1",
             "1.10.1@26.05.1",
@@ -47,6 +45,8 @@ class ExistingInstallationTests(unittest.TestCase):
         versions = [
             "",
             "1.10.1",
+            "1.5.0@17.12.2",
+            "1.8.0@19.09",
             "1.9.99.36@13.12.1-1903-g8515694c",
             "1.9.99@14.08",
             "1.9.99@15.11",
