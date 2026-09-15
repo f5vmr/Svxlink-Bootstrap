@@ -12,7 +12,7 @@ SvxLink 26.05.1 is created and maintained by Tobias Blömberg, SM0SVX.
 
 SvxLink-Bootstrap and SvxLink-Dash V4.0 are developed and maintained by Chris Jackson, G4NAB, to provide a guided installation, configuration and operational environment around the standard SvxLink software.
 
-For authoritative SvxLink configuration and operating information, refer to:
+For authoritative SvxLink configuration and operating information, refer only to:
 
 * [Official SvxLink repository](https://github.com/sm0svx/svxlink)
 * [Official SvxLink wiki](https://github.com/sm0svx/svxlink/wiki)
@@ -30,9 +30,9 @@ The current manifest contains seven supported package targets:
 
 | Platform     | Operating system          | Release  | Architecture |
 | ------------ | ------------------------- | -------- | ------------ |
-| Raspberry Pi | Debian or Raspberry Pi OS | Bookworm | arm64        |
-| Raspberry Pi | Debian or Raspberry Pi OS | Trixie   | arm64        |
-| Raspberry Pi | Debian or Raspberry Pi OS | Bookworm | armhf        |
+| Raspberry Pi | Raspberry Pi OS           | Bookworm | arm64        |
+| Raspberry Pi | Raspberry Pi OS.          | Trixie   | arm64        |
+| Raspberry Pi | Raspberry Pi OS.          | Bookworm | armhf        |
 | Debian PC    | Debian                    | Bookworm | amd64        |
 | Debian PC    | Debian                    | Trixie   | amd64        |
 | Debian PC    | Debian                    | Bookworm | i386         |
@@ -46,11 +46,11 @@ The NanoPi Neo package is selected from the device-tree model, Debian Trixie ide
 
 SvxLink-Bootstrap is intended to run only on the supported Bookworm and Trixie systems listed above.
 
-The launcher refuses to proceed on Debian or Raspberry Pi OS releases earlier than Bookworm and performs this check before refreshing APT or installing prerequisites. Installing `python3` on an older system would supply only the Python version and supporting packages available to that historical distribution; these may not be capable of running the current Bootstrap or SvxLink-Dash V4.0 software.
+The launcher refuses to proceed on Debian or Raspberry Pi OS releases earlier than Bookworm and performs this check before refreshing apt or installing dependencies. Installing `python3` on an older system would supply only the Python version and supporting packages available to that historical distribution; these may not be capable of running the current Bootstrap or SvxLink-Dash V4.0 software.
 
 Do not use Bootstrap as an in-place operating-system upgrade tool.
 
-For a system based on Jessie, Stretch, Buster, Bullseye or another unsupported release:
+For a system based on Jessie, Stretch, Buster, Bullseye or any another unsupported release:
 
 1. Record the existing radio, audio, GPIO, squelch, transmitter, logic, module and reflector configuration.
 2. Make an independent copy of `/etc/svxlink`, `/etc/default/svxlink` and any locally maintained scripts or certificates.
