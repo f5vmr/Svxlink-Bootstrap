@@ -58,6 +58,22 @@ OLDER_COMPILER_INSTALLATION = {
     "conversion_candidate": True,
 }
 
+FAULTY_VERSION_INSTALLATION = {
+    "present": True,
+    "installation_type": "package",
+    "version": "1.10.1@V26.05_Trixie",
+    "version_source": "executable",
+    "runtime_healthy": True,
+    "runtime_error": "",
+    "executable": "/usr/bin/svxlink",
+    "canonical_executable": "/usr/bin/svxlink",
+    "service_load_state": "loaded",
+    "service_active_state": "active",
+    "package_status": "ii  svxlink 26.05.1",
+    "supported_version": False,
+    "package_managed": True,
+    "conversion_candidate": False,
+}
 
 class WebManagerTests(unittest.TestCase):
 
@@ -160,6 +176,47 @@ class WebManagerTests(unittest.TestCase):
         )
         self.assertIn(
             b"Install SvxLink-Dash V4.0",
+            response.data,
+        )
+        resolve_mock.assert_called_once_with()
+        installation_mock.assert_called_once_with()
+
+    @patch(
+        "web_manager.detect_existing_installation",
+        return_value=FAULTY_VERSION_INSTALLATION,
+    )
+    @patch(
+        "web_manager.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_faulty_version_string_repair_is_offered(
+        self,
+        resolve_mock,
+        installation_mock,
+    ):
+        response = self.client.get(
+            "/?token=test-access-token"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            b"previous SvxLink 26.05.1 installation",
+            response.data,
+        )
+        self.assertIn(
+            b"faulty version string",
+            response.data,
+        )
+        self.assertIn(
+            b"correct verified package will be reinstalled",
+            response.data,
+        )
+        self.assertIn(
+            b"Install SvxLink-Dash V4.0",
+            response.data,
+        )
+        self.assertNotIn(
+            b"This installation cannot be processed",
             response.data,
         )
         resolve_mock.assert_called_once_with()
@@ -444,7 +501,6 @@ class WebManagerTests(unittest.TestCase):
         server.server_close.assert_called_once_with()
         self.assertEqual(token_mock.call_count, 2)
         address_mock.assert_called_once_with()
-
 
     @patch("web_manager.time.sleep")
     def test_completed_handover_stops_server(

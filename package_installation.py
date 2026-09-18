@@ -20,6 +20,7 @@ from system_access import require_root
 class PackageInstallationError(RuntimeError):
     """Raised when the SvxLink Debian package cannot be installed."""
 
+
 def reload_systemd_manager():
     """Reload systemd unit files after package installation."""
 
@@ -48,6 +49,7 @@ def reload_systemd_manager():
             "systemctl daemon-reload failed "
             f"(exit status {result.returncode})."
         )
+
 
 def verify_installed_package(installation):
     """Verify the installed SvxLink package and executable."""
@@ -89,7 +91,8 @@ def verify_installed_package(installation):
 
         raise PackageInstallationError(message)
 
-def install_package(package_path):
+
+def install_package(package_path, reinstall=False):
     """
     Install a verified local Debian package using APT.
 
@@ -121,16 +124,24 @@ def install_package(package_path):
     environment = os.environ.copy()
     environment["DEBIAN_FRONTEND"] = "noninteractive"
 
+    command = [
+        apt_get,
+        "install",
+        "--yes",
+    ]
+
+    if reinstall:
+        command.append("--reinstall")
+
+    command.extend([
+        "-o",
+        "Dpkg::Options::=--force-confold",
+        str(package_path),
+    ])
+
     try:
         result = subprocess.run(
-            [
-                apt_get,
-                "install",
-                "--yes",
-                "-o",
-                "Dpkg::Options::=--force-confold",
-                str(package_path),
-            ],
+            command,
             check=False,
             env=environment,
         )

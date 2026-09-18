@@ -146,6 +146,13 @@
                     installation will be retained. Its configuration
                     will be backed up before Dashboard installation.
                 </div>
+                {% elif action == "repair" %}
+                <div class="warning">
+                    A previous SvxLink 26.05.1 installation
+                    containing a faulty version string was detected.
+                    Its configuration will be backed up, the active
+                    service will be stopped, and the correct verified package will be reinstalled.
+                </div>
                 {% elif action == "convert" %}
                     {% if installation.supported_version %}
                 <div class="warning">

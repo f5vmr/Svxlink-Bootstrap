@@ -13,6 +13,8 @@ from pathlib import Path
 
 SUPPORTED_SVXLINK_VERSION = "26.05.1"
 
+KNOWN_FAULTY_PACKAGE_VERSION = "1.10.1@V26.05_Trixie"
+
 REPLACEABLE_COMPILER_RELEASE_YEARS = frozenset({
     "24",
     "25",
@@ -337,6 +339,17 @@ def determine_installation_action(installation):
 
     if not installation["present"]:
         return "install"
+
+    if (
+        installation["package_managed"]
+        and str(
+            installation.get("version", "")
+        ).strip() == KNOWN_FAULTY_PACKAGE_VERSION
+        and version_is_supported(
+            installation.get("package_status", "")
+        )
+    ):
+        return "repair"
 
     if (
         installation["package_managed"]

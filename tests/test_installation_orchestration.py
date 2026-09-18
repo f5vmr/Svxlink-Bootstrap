@@ -46,6 +46,16 @@ COMPILER_INSTALLATION = {
     "conversion_candidate": True,
 }
 
+FAULTY_PACKAGE_INSTALLATION = {
+    "present": True,
+    "version": "1.10.1@V26.05_Trixie",
+    "package_status": "ii  svxlink 26.05.1",
+    "supported_version": False,
+    "package_managed": True,
+    "conversion_candidate": False,
+    "service_load_state": "loaded",
+    "service_active_state": "active",
+}
 
 class InstallationOrchestrationTests(unittest.TestCase):
     def run_installation(
@@ -274,6 +284,71 @@ class InstallationOrchestrationTests(unittest.TestCase):
         )
         package_install_mock.assert_called_once_with(
             package_path
+        )
+        dashboard_mock.assert_called_once_with()
+
+    def test_known_faulty_package_is_backed_up_and_repaired(self):
+        backup_path = Path(
+            "/var/backups/svxlink-bootstrap/20260918-190000"
+        )
+        package_path = Path(
+            "/tmp/download/svxlink_26.05.1_amd64.deb"
+        )
+        progress_mock = Mock()
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.backup_existing_configuration",
+                return_value=backup_path,
+            ) as backup_mock,
+            patch(
+                "bootstrap.download_package",
+                return_value=package_path,
+            ) as download_mock,
+            patch(
+                "bootstrap.stop_svxlink_service_if_active",
+                return_value=True,
+            ) as stop_mock,
+            patch(
+                "bootstrap.install_package"
+            ) as package_install_mock,
+            patch(
+                "bootstrap.install_dashboard",
+                return_value=Path("/opt/dashboard"),
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                FAULTY_PACKAGE_INSTALLATION,
+                progress=progress_mock,
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stderr, "")
+        self.assertIn(str(backup_path), stdout)
+        self.assertIn(
+            (
+                "Repairing a previous SvxLink 26.05.1 "
+                "installation with a faulty version string."
+            ),
+            stdout,
+        )
+        self.assertNotIn(
+            "compiler-installed SvxLink",
+            stdout,
+        )
+        backup_mock.assert_called_once_with()
+        download_mock.assert_called_once()
+        self.assertEqual(
+            download_mock.call_args.args[0],
+            PACKAGE,
+        )
+        stop_mock.assert_called_once_with(
+            FAULTY_PACKAGE_INSTALLATION
+        )
+        package_install_mock.assert_called_once_with(
+            package_path,
+            reinstall=True,
         )
         dashboard_mock.assert_called_once_with()
 

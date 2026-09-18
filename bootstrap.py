@@ -114,6 +114,7 @@ def resolve_host_package(
 
     return host, package
 
+
 def describe_existing_installation(installation):
     """Return a concise existing-installation report."""
 
@@ -197,6 +198,22 @@ def describe_existing_installation(installation):
             ),
         ])
 
+    elif action == "repair":
+        details.extend([
+            (
+                "Compatibility:    repair required for "
+                "faulty version string"
+            ),
+            (
+                "The existing configuration will be backed up "
+                "before package repair."
+            ),
+            (
+                "The correct verified package will be forcibly "
+                "reinstalled."
+            ),
+        ])
+
     elif action == "convert":
         details.extend([
             "Compatibility:    compiler installation",
@@ -220,6 +237,8 @@ def describe_existing_installation(installation):
         ])
 
     return "\n".join(details)
+
+
 def report_installation_progress(
     progress,
     stage,
@@ -234,6 +253,7 @@ def report_installation_progress(
             status,
             message,
         )
+
 
 def perform_installation(
     package,
@@ -260,7 +280,7 @@ def perform_installation(
         print(str(exc), file=sys.stderr)
         return 5
 
-    if action in {"retain", "convert"}:
+    if action in {"retain", "convert", "repair"}:
         report_installation_progress(
             progress,
             "backup",
@@ -311,11 +331,18 @@ def perform_installation(
             "skipped",
             "No existing configuration requires backup.",
         )
-    if action in {"install", "convert"}:
+    if action in {"install", "convert", "repair"}:
         if action == "convert":
             print(
                 "The compiler-installed SvxLink will be "
                 "converted to the verified Debian package."
+            )
+            print()
+
+        elif action == "repair":
+            print(
+                "Repairing a previous SvxLink 26.05.1 "
+                "installation with a faulty version string."
             )
             print()
 
@@ -345,7 +372,7 @@ def perform_installation(
                 print(package_path)
                 print()
 
-                if action == "convert":
+                if action in {"convert", "repair"}:
                     report_installation_progress(
                         progress,
                         "service",
@@ -402,7 +429,13 @@ def perform_installation(
                     "Installing and verifying SvxLink 26.05.1.",
                 )
 
-                install_package(package_path)
+                if action == "repair":
+                    install_package(
+                        package_path,
+                        reinstall=True,
+                    )
+                else:
+                    install_package(package_path)
 
                 report_installation_progress(
                     progress,
@@ -564,7 +597,7 @@ def main(download_directory=None, install=False):
         print(
             "Automatic processing stopped because the "
             "existing SvxLink installation is not eligible "
-            "for retention or package conversion.",
+            "for retention, repair, or package conversion.",
             file=sys.stderr,
         )
         return 4
@@ -581,7 +614,6 @@ def main(download_directory=None, install=False):
             "changes were made."
         )
         return 0
-
 
     if action == "retain":
         print(

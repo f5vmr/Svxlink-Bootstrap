@@ -191,6 +191,30 @@ class ExistingInstallationTests(unittest.TestCase):
 
         self.assertEqual(action, "retain")
 
+    def test_known_faulty_package_installation_is_repaired(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": True,
+            "supported_version": False,
+            "conversion_candidate": False,
+            "version": "1.10.1@V26.05_Trixie",
+            "package_status": "ii  svxlink 26.05.1",
+        })
+
+        self.assertEqual(action, "repair")
+
+    def test_unknown_package_mismatch_is_blocked(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": True,
+            "supported_version": False,
+            "conversion_candidate": False,
+            "version": "1.10.1@unexpected-build",
+            "package_status": "ii  svxlink 26.05.1",
+        })
+
+        self.assertEqual(action, "block")
+
     def test_catalogued_older_compiler_installation_is_converted(self):
         action = determine_installation_action({
             "present": True,

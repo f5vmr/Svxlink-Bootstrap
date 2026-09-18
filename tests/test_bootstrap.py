@@ -57,6 +57,7 @@ COMPILER_INSTALLATION = {
     "conversion_candidate": True,
 }
 
+
 class BootstrapTests(unittest.TestCase):
     @patch(
         "bootstrap.resolve_host_package",
@@ -84,6 +85,7 @@ class BootstrapTests(unittest.TestCase):
             stdout.getvalue(),
         )
         resolve_mock.assert_called_once_with()
+
     @patch(
         "bootstrap.resolve_host_package",
         side_effect=HostDetectionError(
@@ -109,6 +111,7 @@ class BootstrapTests(unittest.TestCase):
             stderr.getvalue(),
         )
         resolve_mock.assert_called_once_with()
+
     @patch(
         "bootstrap.resolve_host_package",
         side_effect=NoMatchingPackageError(
@@ -132,6 +135,7 @@ class BootstrapTests(unittest.TestCase):
             stderr.getvalue(),
         )
         resolve_mock.assert_called_once_with()
+
     @patch(
         "bootstrap.download_package",
         return_value=Path(
@@ -172,6 +176,7 @@ class BootstrapTests(unittest.TestCase):
             "/tmp/packages",
         )
         resolve_mock.assert_called_once_with()
+
     @patch(
         "bootstrap.download_package",
         side_effect=PackageDownloadError(
@@ -281,6 +286,37 @@ class BootstrapTests(unittest.TestCase):
             "configuration will be backed up",
             report,
         )
+
+    def test_known_faulty_package_repair_report(self):
+        report = bootstrap.describe_existing_installation({
+            "present": True,
+            "installation_type": "package",
+            "version": "1.10.1@V26.05_Trixie",
+            "version_source": "executable",
+            "runtime_healthy": True,
+            "runtime_error": "",
+            "executable": "/usr/bin/svxlink",
+            "service_load_state": "loaded",
+            "service_active_state": "active",
+            "package_status": "ii  svxlink 26.05.1",
+            "supported_version": False,
+            "package_managed": True,
+            "conversion_candidate": False,
+        })
+
+        self.assertIn(
+            "repair required for faulty version string",
+            report,
+        )
+        self.assertIn(
+            "configuration will be backed up",
+            report,
+        )
+        self.assertIn(
+            "verified package will be forcibly reinstalled",
+            report,
+        )
+
     def test_unknown_existing_installation_report(self):
         report = bootstrap.describe_existing_installation({
             "present": True,
@@ -309,6 +345,7 @@ class BootstrapTests(unittest.TestCase):
             "stop for manual review",
             report,
         )
+
     @patch("bootstrap.download_package")
     @patch(
         "bootstrap.detect_existing_installation",
@@ -354,6 +391,7 @@ class BootstrapTests(unittest.TestCase):
         download_mock.assert_not_called()
         installation_mock.assert_called_once_with()
         resolve_mock.assert_called_once_with()
+
     @patch("bootstrap.download_package")
     @patch(
         "bootstrap.detect_existing_installation",
@@ -499,6 +537,7 @@ class BootstrapTests(unittest.TestCase):
         )
         install_mock.assert_not_called()
         dashboard_mock.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
