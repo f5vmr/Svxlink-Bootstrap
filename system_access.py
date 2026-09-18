@@ -25,4 +25,3 @@ def require_root():
             "Installation requires root privileges. "
             "Run the bootstrap with sudo."
         )
-

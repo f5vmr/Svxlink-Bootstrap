@@ -64,6 +64,7 @@ UNSUPPORTED_COMPILER_INSTALLATION = {
     "package_status": "",
 }
 
+
 class CommandLineTests(unittest.TestCase):
     def test_install_argument_is_parsed(self):
         with patch.object(

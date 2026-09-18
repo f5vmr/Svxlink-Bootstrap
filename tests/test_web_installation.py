@@ -292,5 +292,6 @@ class InstallationStateTests(unittest.TestCase):
         )
         worker.start.assert_called_once_with()
 
+
 if __name__ == "__main__":
     unittest.main()

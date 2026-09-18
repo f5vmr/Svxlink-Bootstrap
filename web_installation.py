@@ -36,6 +36,7 @@ FAILURE_STAGE_BY_EXIT_CODE = {
     9: "service",
 }
 
+
 class InstallationStateError(RuntimeError):
     """Raised when an invalid progress transition is requested."""
 
