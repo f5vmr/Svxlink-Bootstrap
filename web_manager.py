@@ -153,7 +153,7 @@ def create_app(
         ):
             abort(403)
 
-        _, package = resolve_host_package()
+        host, package = resolve_host_package()
         installation = detect_existing_installation()
         action = determine_installation_action(
             installation
@@ -178,6 +178,7 @@ def create_app(
         try:
             start_installation_job(
                 state,
+                host,
                 package,
                 installation,
                 app.config["BOOTSTRAP_DASHBOARD_URL"],

@@ -147,6 +147,7 @@ class CommandLineTests(unittest.TestCase):
         resolve_mock.assert_called_once_with()
         installation_mock.assert_called_once_with()
         perform_mock.assert_called_once_with(
+            HOST,
             PACKAGE,
             NOT_INSTALLED,
         )

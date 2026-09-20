@@ -34,6 +34,7 @@ FAILURE_STAGE_BY_EXIT_CODE = {
     7: "package",
     8: "dashboard",
     9: "service",
+    10: "service",
 }
 
 
@@ -235,6 +236,7 @@ def report_progress_to_state(
 
 def run_installation_job(
     state,
+    host,
     package,
     installation,
     dashboard_url,
@@ -251,6 +253,7 @@ def run_installation_job(
 
     try:
         result = bootstrap.perform_installation(
+            host,
             package,
             installation,
             progress=progress,
@@ -289,6 +292,7 @@ def run_installation_job(
 
 def start_installation_job(
     state,
+    host,
     package,
     installation,
     dashboard_url,
@@ -301,6 +305,7 @@ def start_installation_job(
         target=run_installation_job,
         args=(
             state,
+            host,
             package,
             installation,
             dashboard_url,

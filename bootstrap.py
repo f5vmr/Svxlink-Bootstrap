@@ -51,6 +51,11 @@ from service_control import (
     stop_svxlink_service_if_active,
 )
 
+from raspberry_pi_preparation import (
+    RaspberryPiPreparationError,
+    prepare_raspberry_pi,
+)
+
 from system_access import (
     RootAccessRequiredError,
     require_root,
@@ -256,6 +261,7 @@ def report_installation_progress(
 
 
 def perform_installation(
+    host,
     package,
     installation,
     progress=None,
@@ -279,6 +285,56 @@ def perform_installation(
     except RootAccessRequiredError as exc:
         print(str(exc), file=sys.stderr)
         return 5
+
+    raspberry_pi_report = None
+
+    if host.get("platform") == "raspberry_pi":
+        print(
+            "Preparing the Raspberry Pi operating-system "
+            "baseline."
+        )
+
+        try:
+            raspberry_pi_report = prepare_raspberry_pi()
+        except RaspberryPiPreparationError as exc:
+            report_installation_progress(
+                progress,
+                "service",
+                "failed",
+                str(exc),
+            )
+            print(
+                f"Raspberry Pi preparation failed: {exc}",
+                file=sys.stderr,
+            )
+            return 10
+
+        changed = raspberry_pi_report.get(
+            "changed",
+            [],
+        )
+
+        if changed:
+            print(
+                "Raspberry Pi preparation completed: "
+                + ", ".join(changed)
+            )
+        else:
+            print(
+                "The Raspberry Pi operating-system baseline "
+                "is already configured."
+            )
+
+        if raspberry_pi_report.get(
+            "reboot_required",
+            False,
+        ):
+            print(
+                "A reboot will be required after installation "
+                "for the audio settings to take effect."
+            )
+
+        print()
 
     if action in {"retain", "convert", "repair"}:
         report_installation_progress(
@@ -604,6 +660,7 @@ def main(download_directory=None, install=False):
 
     if install:
         return perform_installation(
+            host,
             package,
             installation,
         )

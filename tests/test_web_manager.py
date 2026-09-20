@@ -286,6 +286,7 @@ class WebManagerTests(unittest.TestCase):
         self.assertEqual(response.status_code, 202)
         start_mock.assert_called_once_with(
             self.installation_state,
+            HOST,
             PACKAGE,
             INSTALLATION,
             self.dashboard_url,
@@ -393,6 +394,7 @@ class WebManagerTests(unittest.TestCase):
         )
         start_mock.assert_called_once_with(
             self.installation_state,
+            HOST,
             PACKAGE,
             INSTALLATION,
             self.dashboard_url,

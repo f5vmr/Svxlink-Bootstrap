@@ -18,6 +18,13 @@ from package_download import PackageDownloadError
 from package_installation import PackageInstallationError
 from system_access import RootAccessRequiredError
 
+HOST = {
+    "platform": "debian",
+}
+
+RASPBERRY_PI_HOST = {
+    "platform": "raspberry_pi",
+}
 
 PACKAGE = {
     "id": "debian_bookworm_amd64",
@@ -71,6 +78,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
             redirect_stderr(stderr),
         ):
             result = bootstrap.perform_installation(
+                HOST,
                 PACKAGE,
                 installation,
                 progress=progress,
@@ -107,6 +115,107 @@ class InstallationOrchestrationTests(unittest.TestCase):
             stderr,
         )
         backup_mock.assert_not_called()
+        download_mock.assert_not_called()
+        dashboard_mock.assert_not_called()
+
+    def test_raspberry_pi_preparation_runs_before_installation(
+        self,
+    ):
+        preparation_report = {
+            "changed": [
+                "boot_audio",
+                "hidraw_rule",
+            ],
+            "reboot_required": True,
+        }
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.prepare_raspberry_pi",
+                return_value=preparation_report,
+            ) as prepare_mock,
+            patch(
+                "bootstrap.download_package",
+                side_effect=PackageDownloadError(
+                    "Stop after preparation."
+                ),
+            ),
+            patch(
+                "bootstrap.install_dashboard"
+            ) as dashboard_mock,
+        ):
+            stdout = StringIO()
+            stderr = StringIO()
+
+            with (
+                redirect_stdout(stdout),
+                redirect_stderr(stderr),
+            ):
+                result = bootstrap.perform_installation(
+                    RASPBERRY_PI_HOST,
+                    PACKAGE,
+                    NOT_INSTALLED,
+                )
+
+        self.assertEqual(result, 3)
+        prepare_mock.assert_called_once_with()
+        self.assertIn(
+            "Raspberry Pi preparation completed",
+            stdout.getvalue(),
+        )
+        self.assertIn(
+            "reboot will be required",
+            stdout.getvalue(),
+        )
+        dashboard_mock.assert_not_called()
+
+    def test_raspberry_pi_preparation_failure_stops_installation(
+        self,
+    ):
+        progress_mock = Mock()
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.prepare_raspberry_pi",
+                side_effect=(
+                    bootstrap.RaspberryPiPreparationError(
+                        "Could not configure Raspberry Pi."
+                    )
+                ),
+            ),
+            patch(
+                "bootstrap.download_package"
+            ) as download_mock,
+            patch(
+                "bootstrap.install_dashboard"
+            ) as dashboard_mock,
+        ):
+            stdout = StringIO()
+            stderr = StringIO()
+
+            with (
+                redirect_stdout(stdout),
+                redirect_stderr(stderr),
+            ):
+                result = bootstrap.perform_installation(
+                    RASPBERRY_PI_HOST,
+                    PACKAGE,
+                    NOT_INSTALLED,
+                    progress=progress_mock,
+                )
+
+        self.assertEqual(result, 10)
+        self.assertIn(
+            "Raspberry Pi preparation failed",
+            stderr.getvalue(),
+        )
+        progress_mock.assert_called_once_with(
+            "service",
+            "failed",
+            "Could not configure Raspberry Pi.",
+        )
         download_mock.assert_not_called()
         dashboard_mock.assert_not_called()
 

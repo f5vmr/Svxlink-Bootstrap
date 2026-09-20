@@ -136,15 +136,18 @@ class InstallationStateTests(unittest.TestCase):
 
     def test_runner_completes_successful_installation(self):
         state = InstallationState()
+        host = object()
         package = object()
         installation = object()
         dashboard_url = "http://192.0.2.10:5000/start"
 
         def perform(
+            received_host,
             received_package,
             received_installation,
             progress,
         ):
+            self.assertIs(received_host, host)
             self.assertIs(received_package, package)
             self.assertIs(
                 received_installation,
@@ -175,6 +178,7 @@ class InstallationStateTests(unittest.TestCase):
         ):
             run_installation_job(
                 state,
+                host,
                 package,
                 installation,
                 dashboard_url,
@@ -194,7 +198,7 @@ class InstallationStateTests(unittest.TestCase):
     def test_runner_records_reported_failure(self):
         state = InstallationState()
 
-        def perform(package, installation, progress):
+        def perform(host, package, installation, progress):
             progress(
                 "package",
                 "running",
@@ -215,6 +219,7 @@ class InstallationStateTests(unittest.TestCase):
         ):
             run_installation_job(
                 state,
+                object(),
                 object(),
                 object(),
                 "http://192.0.2.10:5000/start",
@@ -243,6 +248,7 @@ class InstallationStateTests(unittest.TestCase):
                 state,
                 object(),
                 object(),
+                object(),
                 "http://192.0.2.10:5000/start",
             )
 
@@ -259,6 +265,7 @@ class InstallationStateTests(unittest.TestCase):
 
     def test_start_creates_one_daemon_worker(self):
         state = InstallationState()
+        host = object()
         package = object()
         installation = object()
         dashboard_url = "http://192.0.2.10:5000/start"
@@ -270,6 +277,7 @@ class InstallationStateTests(unittest.TestCase):
         ) as thread_mock:
             result = start_installation_job(
                 state,
+                host,
                 package,
                 installation,
                 dashboard_url,
@@ -284,6 +292,7 @@ class InstallationStateTests(unittest.TestCase):
             target=run_installation_job,
             args=(
                 state,
+                host,
                 package,
                 installation,
                 dashboard_url,

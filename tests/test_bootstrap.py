@@ -448,6 +448,13 @@ class BootstrapTests(unittest.TestCase):
         with (
             patch("bootstrap.require_root") as root_mock,
             patch(
+                "bootstrap.prepare_raspberry_pi",
+                return_value={
+                    "changed": [],
+                    "reboot_required": False,
+                },
+            ) as prepare_mock,
+            patch(
                 "bootstrap.backup_existing_configuration",
                 return_value=Path("/var/backups/test"),
             ) as backup_mock,
@@ -470,6 +477,7 @@ class BootstrapTests(unittest.TestCase):
             redirect_stderr(stderr),
         ):
             result = bootstrap.perform_installation(
+                HOST,
                 PACKAGE,
                 COMPILER_INSTALLATION,
             )
@@ -481,6 +489,7 @@ class BootstrapTests(unittest.TestCase):
             stdout.getvalue(),
         )
         root_mock.assert_called_once_with()
+        prepare_mock.assert_called_once_with()
         backup_mock.assert_called_once_with()
         download_mock.assert_called_once()
         stop_mock.assert_called_once_with(
@@ -499,6 +508,13 @@ class BootstrapTests(unittest.TestCase):
 
         with (
             patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.prepare_raspberry_pi",
+                return_value={
+                    "changed": [],
+                    "reboot_required": False,
+                },
+            ) as prepare_mock,
             patch(
                 "bootstrap.backup_existing_configuration",
                 return_value=Path("/var/backups/test"),
@@ -523,6 +539,7 @@ class BootstrapTests(unittest.TestCase):
             redirect_stderr(stderr),
         ):
             result = bootstrap.perform_installation(
+                HOST,
                 PACKAGE,
                 COMPILER_INSTALLATION,
             )
@@ -537,7 +554,7 @@ class BootstrapTests(unittest.TestCase):
         )
         install_mock.assert_not_called()
         dashboard_mock.assert_not_called()
-
+        prepare_mock.assert_called_once_with()
 
 if __name__ == "__main__":
     unittest.main()
