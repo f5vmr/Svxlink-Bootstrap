@@ -94,6 +94,61 @@ def replace_managed_line(
     return "\n".join(result) + "\n"
 
 
+def disable_vc4_hdmi_audio(content):
+    """
+    Add noaudio to active VC4 KMS overlay declarations.
+
+    Existing overlay parameters are preserved. Commented lines and
+    unrelated overlays remain unchanged.
+    """
+
+    expression = re.compile(
+        r"^("
+        r"\s*dtoverlay\s*=\s*"
+        r"vc4-kms-v3d"
+        r"(?:-[A-Za-z0-9_-]+)?"
+        r")"
+        r"([^#]*)"
+        r"(#.*)?$"
+    )
+
+    result = []
+
+    for line in content.splitlines():
+        match = expression.match(line)
+
+        if not match:
+            result.append(line)
+            continue
+
+        declaration = match.group(1)
+        parameter_text = match.group(2) or ""
+        comment = match.group(3) or ""
+
+        parameters = [
+            parameter.strip().lower()
+            for parameter in parameter_text.split(",")
+            if parameter.strip()
+        ]
+
+        if "noaudio" in parameters:
+            result.append(line)
+            continue
+
+        updated_line = (
+            declaration
+            + parameter_text.rstrip()
+            + ",noaudio"
+        )
+
+        if comment:
+            updated_line += " " + comment
+
+        result.append(updated_line)
+
+    return "\n".join(result) + "\n"
+
+
 def write_if_changed(
     path,
     content,
@@ -136,7 +191,7 @@ def write_if_changed(
 
 
 def configure_boot_audio(path=BOOT_CONFIG_PATH):
-    """Disable the Raspberry Pi onboard audio interface."""
+    """Disable Raspberry Pi onboard and HDMI audio."""
 
     path = Path(path)
 
@@ -154,6 +209,10 @@ def configure_boot_audio(path=BOOT_CONFIG_PATH):
         content,
         r"^\s*dtparam\s*=\s*audio\s*=",
         BOOT_AUDIO_SETTING,
+    )
+
+    updated = disable_vc4_hdmi_audio(
+        updated
     )
 
     return write_if_changed(

@@ -65,6 +65,84 @@ class RaspberryPiPreparationTests(unittest.TestCase):
                 ),
             )
 
+    def test_configure_boot_audio_disables_hdmi_audio(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.txt"
+            path.write_text(
+                (
+                    "dtparam=audio=on\n"
+                    "dtoverlay=vc4-kms-v3d\n"
+                ),
+                encoding="utf-8",
+            )
+
+            result = preparation.configure_boot_audio(
+                path
+            )
+
+            self.assertTrue(result)
+            self.assertEqual(
+                path.read_text(encoding="utf-8"),
+                (
+                    "dtparam=audio=off\n"
+                    "dtoverlay=vc4-kms-v3d,noaudio\n"
+                ),
+            )
+
+    def test_configure_boot_audio_preserves_vc4_parameters(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.txt"
+            path.write_text(
+                (
+                    "#dtoverlay=vc4-kms-v3d\n"
+                    "dtoverlay=vc4-kms-v3d,cma-256\n"
+                ),
+                encoding="utf-8",
+            )
+
+            result = preparation.configure_boot_audio(
+                path
+            )
+
+            self.assertTrue(result)
+            self.assertEqual(
+                path.read_text(encoding="utf-8"),
+                (
+                    "#dtoverlay=vc4-kms-v3d\n"
+                    "dtoverlay=vc4-kms-v3d,cma-256,noaudio\n"
+                    "\n"
+                    "dtparam=audio=off\n"
+                ),
+            )
+
+    def test_configure_boot_audio_noaudio_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.txt"
+            path.write_text(
+                (
+                    "dtparam=audio=off\n"
+                    "dtoverlay=vc4-kms-v3d,noaudio\n"
+                ),
+                encoding="utf-8",
+            )
+
+            first_result = (
+                preparation.configure_boot_audio(path)
+            )
+            second_result = (
+                preparation.configure_boot_audio(path)
+            )
+
+            self.assertFalse(first_result)
+            self.assertFalse(second_result)
+            self.assertEqual(
+                path.read_text(encoding="utf-8"),
+                (
+                    "dtparam=audio=off\n"
+                    "dtoverlay=vc4-kms-v3d,noaudio\n"
+                ),
+            )
+
     def test_module_blacklist_preserves_other_settings(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "blacklist.conf"
