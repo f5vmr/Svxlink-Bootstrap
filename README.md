@@ -64,9 +64,11 @@ Historical configuration should be retained for reference, but it should not be 
 
 ## Before running Bootstrap
 
-The operator is responsible for updating the operating system before starting SvxLink-Bootstrap.
+The operator is responsible for updating the operating system before starting SvxLink-Bootstrap. It will be prudent to use user 'pi' when writing the Operating System for Raspberry Pi. The Operating system for Armbian builds in root, but invites the inout of a user name - pi is also recommended.
 
-On a newly installed or existing system, run:
+For amd64 or i386 leave the user as root.
+
+Once installed on or an existing system, always run:
 
 ```bash
 sudo apt-get update
