@@ -153,6 +153,14 @@
                     Its configuration will be backed up, the active
                     service will be stopped, and the correct verified package will be reinstalled.
                 </div>
+                {% elif action == "upgrade" %}
+                <div class="warning">
+                    A package-managed SvxLink 26.05 installation was
+                    detected. Its configuration will be backed up, the
+                    active service will be stopped, and the installation
+                    will be upgraded to the verified SvxLink 26.05.1
+                    Debian package.
+                </div>
                 {% elif action == "convert" %}
                     {% if installation.supported_version %}
                 <div class="warning">

@@ -64,6 +64,18 @@ FAULTY_PACKAGE_INSTALLATION = {
     "service_active_state": "active",
 }
 
+UPGRADEABLE_PACKAGE_INSTALLATION = {
+    "present": True,
+    "version": "1.10.0@V26.05",
+    "package_status": "ii  svxlink 26.05",
+    "supported_version": False,
+    "package_managed": True,
+    "conversion_candidate": False,
+    "service_load_state": "loaded",
+    "service_active_state": "active",
+}
+
+
 class InstallationOrchestrationTests(unittest.TestCase):
     def run_installation(
         self,
@@ -458,6 +470,74 @@ class InstallationOrchestrationTests(unittest.TestCase):
         package_install_mock.assert_called_once_with(
             package_path,
             reinstall=True,
+        )
+        dashboard_mock.assert_called_once_with()
+
+    def test_older_package_is_backed_up_and_upgraded(self):
+        backup_path = Path(
+            "/var/backups/svxlink-bootstrap/20260922-180000"
+        )
+        package_path = Path(
+            "/tmp/download/svxlink_26.05.1_amd64.deb"
+        )
+        progress_mock = Mock()
+
+        with (
+            patch("bootstrap.require_root"),
+            patch(
+                "bootstrap.backup_existing_configuration",
+                return_value=backup_path,
+            ) as backup_mock,
+            patch(
+                "bootstrap.download_package",
+                return_value=package_path,
+            ) as download_mock,
+            patch(
+                "bootstrap.stop_svxlink_service_if_active",
+                return_value=True,
+            ) as stop_mock,
+            patch(
+                "bootstrap.install_package"
+            ) as package_install_mock,
+            patch(
+                "bootstrap.install_dashboard",
+                return_value=Path("/opt/dashboard"),
+            ) as dashboard_mock,
+        ):
+            result, stdout, stderr = self.run_installation(
+                UPGRADEABLE_PACKAGE_INSTALLATION,
+                progress=progress_mock,
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(stderr, "")
+        self.assertIn(str(backup_path), stdout)
+        self.assertIn(
+            (
+                "Upgrading the package-managed SvxLink "
+                "installation to version 26.05.1."
+            ),
+            stdout,
+        )
+        self.assertNotIn(
+            "faulty version string",
+            stdout,
+        )
+        self.assertNotIn(
+            "compiler-installed SvxLink",
+            stdout,
+        )
+        backup_mock.assert_called_once_with()
+        download_mock.assert_called_once()
+        self.assertEqual(
+            download_mock.call_args.args[0],
+            PACKAGE,
+        )
+        stop_mock.assert_called_once_with(
+            UPGRADEABLE_PACKAGE_INSTALLATION
+        )
+        package_install_mock.assert_called_once_with(
+            package_path
         )
         dashboard_mock.assert_called_once_with()
 

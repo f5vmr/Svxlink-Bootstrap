@@ -219,6 +219,22 @@ def describe_existing_installation(installation):
             ),
         ])
 
+    elif action == "upgrade":
+        details.extend([
+            (
+                "Compatibility:    upgrade available from "
+                "SvxLink 26.05"
+            ),
+            (
+                "The existing configuration will be backed up "
+                "before package upgrade."
+            ),
+            (
+                "The verified SvxLink 26.05.1 package will "
+                "be installed."
+            ),
+        ])
+
     elif action == "convert":
         details.extend([
             "Compatibility:    compiler installation",
@@ -336,7 +352,12 @@ def perform_installation(
 
         print()
 
-    if action in {"retain", "convert", "repair"}:
+    if action in {
+        "retain",
+        "convert",
+        "repair",
+        "upgrade",
+    }:
         report_installation_progress(
             progress,
             "backup",
@@ -387,7 +408,12 @@ def perform_installation(
             "skipped",
             "No existing configuration requires backup.",
         )
-    if action in {"install", "convert", "repair"}:
+    if action in {
+        "install",
+        "convert",
+        "repair",
+        "upgrade",
+    }:
         if action == "convert":
             print(
                 "The compiler-installed SvxLink will be "
@@ -399,6 +425,13 @@ def perform_installation(
             print(
                 "Repairing a previous SvxLink 26.05.1 "
                 "installation with a faulty version string."
+            )
+            print()
+
+        elif action == "upgrade":
+            print(
+                "Upgrading the package-managed SvxLink "
+                "installation to version 26.05.1."
             )
             print()
 
@@ -428,7 +461,11 @@ def perform_installation(
                 print(package_path)
                 print()
 
-                if action in {"convert", "repair"}:
+                if action in {
+                    "convert",
+                    "repair",
+                    "upgrade",
+                }:
                     report_installation_progress(
                         progress,
                         "service",
@@ -653,7 +690,8 @@ def main(download_directory=None, install=False):
         print(
             "Automatic processing stopped because the "
             "existing SvxLink installation is not eligible "
-            "for retention, repair, or package conversion.",
+            "for retention, repair, package upgrade, or "
+            "package conversion.",
             file=sys.stderr,
         )
         return 4

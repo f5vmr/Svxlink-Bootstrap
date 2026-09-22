@@ -317,6 +317,43 @@ class BootstrapTests(unittest.TestCase):
             report,
         )
 
+    def test_known_older_package_upgrade_report(self):
+        report = bootstrap.describe_existing_installation({
+            "present": True,
+            "installation_type": "package",
+            "version": "1.10.0@V26.05",
+            "version_source": "executable",
+            "runtime_healthy": True,
+            "runtime_error": "",
+            "executable": "/usr/bin/svxlink",
+            "service_load_state": "loaded",
+            "service_active_state": "active",
+            "package_status": "ii  svxlink 26.05",
+            "supported_version": False,
+            "package_managed": True,
+            "conversion_candidate": False,
+        })
+
+        self.assertIn(
+            "upgrade available from SvxLink 26.05",
+            report,
+        )
+        self.assertIn(
+            "configuration will be backed up",
+            report,
+        )
+        self.assertIn(
+            (
+                "verified SvxLink 26.05.1 package will "
+                "be installed"
+            ),
+            report,
+        )
+        self.assertNotIn(
+            "unsupported or unknown",
+            report,
+        )
+
     def test_unknown_existing_installation_report(self):
         report = bootstrap.describe_existing_installation({
             "present": True,

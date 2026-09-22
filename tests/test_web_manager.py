@@ -75,6 +75,24 @@ FAULTY_VERSION_INSTALLATION = {
     "conversion_candidate": False,
 }
 
+UPGRADEABLE_PACKAGE_INSTALLATION = {
+    "present": True,
+    "installation_type": "package",
+    "version": "1.10.0@V26.05",
+    "version_source": "executable",
+    "runtime_healthy": True,
+    "runtime_error": "",
+    "executable": "/usr/bin/svxlink",
+    "canonical_executable": "/usr/bin/svxlink",
+    "service_load_state": "loaded",
+    "service_active_state": "active",
+    "package_status": "ii  svxlink 26.05",
+    "supported_version": False,
+    "package_managed": True,
+    "conversion_candidate": False,
+}
+
+
 class WebManagerTests(unittest.TestCase):
 
     def setUp(self):
@@ -209,6 +227,43 @@ class WebManagerTests(unittest.TestCase):
         )
         self.assertIn(
             b"correct verified package will be reinstalled",
+            response.data,
+        )
+        self.assertIn(
+            b"Install SvxLink-Dash V4.0",
+            response.data,
+        )
+        self.assertNotIn(
+            b"This installation cannot be processed",
+            response.data,
+        )
+        resolve_mock.assert_called_once_with()
+        installation_mock.assert_called_once_with()
+
+    @patch(
+        "web_manager.detect_existing_installation",
+        return_value=UPGRADEABLE_PACKAGE_INSTALLATION,
+    )
+    @patch(
+        "web_manager.resolve_host_package",
+        return_value=(HOST, PACKAGE),
+    )
+    def test_older_package_upgrade_is_offered(
+        self,
+        resolve_mock,
+        installation_mock,
+    ):
+        response = self.client.get(
+            "/?token=test-access-token"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            b"package-managed SvxLink 26.05 installation",
+            response.data,
+        )
+        self.assertIn(
+            b"upgraded to the verified SvxLink 26.05.1",
             response.data,
         )
         self.assertIn(

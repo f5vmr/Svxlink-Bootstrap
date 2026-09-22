@@ -203,6 +203,18 @@ class ExistingInstallationTests(unittest.TestCase):
 
         self.assertEqual(action, "repair")
 
+    def test_known_older_package_installation_is_upgraded(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": True,
+            "supported_version": False,
+            "conversion_candidate": False,
+            "version": "1.10.0@V26.05",
+            "package_status": "ii  svxlink 26.05",
+        })
+
+        self.assertEqual(action, "upgrade")
+
     def test_unknown_package_mismatch_is_blocked(self):
         action = determine_installation_action({
             "present": True,

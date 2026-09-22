@@ -15,6 +15,10 @@ SUPPORTED_SVXLINK_VERSION = "26.05.1"
 
 KNOWN_FAULTY_PACKAGE_VERSION = "1.10.1@V26.05_Trixie"
 
+UPGRADEABLE_PACKAGE_VERSION = "1.10.0@V26.05"
+
+UPGRADEABLE_PACKAGE_STATUS = "ii svxlink 26.05"
+
 REPLACEABLE_COMPILER_RELEASE_YEARS = frozenset({
     "24",
     "25",
@@ -350,6 +354,19 @@ def determine_installation_action(installation):
         )
     ):
         return "repair"
+
+    if (
+        installation["package_managed"]
+        and str(
+            installation.get("version", "")
+        ).strip() == UPGRADEABLE_PACKAGE_VERSION
+        and " ".join(
+            str(
+                installation.get("package_status", "")
+            ).split()
+        ) == UPGRADEABLE_PACKAGE_STATUS
+    ):
+        return "upgrade"
 
     if (
         installation["package_managed"]
