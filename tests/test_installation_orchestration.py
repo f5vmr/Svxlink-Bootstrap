@@ -570,11 +570,24 @@ class InstallationOrchestrationTests(unittest.TestCase):
             "/tmp/download/svxlink_26.05.1_amd64.deb"
         )
         progress_mock = Mock()
+
+        def download_to_temporary_directory(
+            received_package,
+            destination_directory,
+        ):
+            self.assertIs(received_package, PACKAGE)
+            directory_mode = (
+                Path(destination_directory).stat().st_mode
+                & 0o777
+            )
+            self.assertEqual(directory_mode, 0o755)
+            return package_path
+
         with (
             patch("bootstrap.require_root"),
             patch(
                 "bootstrap.download_package",
-                return_value=package_path,
+                side_effect=download_to_temporary_directory,
             ) as download_mock,
             patch(
                 "bootstrap.install_package"

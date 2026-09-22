@@ -439,6 +439,8 @@ def perform_installation(
             with tempfile.TemporaryDirectory(
                 prefix="svxlink-bootstrap-package-"
             ) as download_directory:
+                Path(download_directory).chmod(0o755)
+
                 report_installation_progress(
                     progress,
                     "download",
