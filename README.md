@@ -8,7 +8,7 @@ The normal installation is performed through a temporary, token-protected web ma
 
 ## Project relationship
 
-SvxLink 26.05.1 is created and maintained by Tobias Blömberg, SM0SVX.
+SvxLink 26.05.1 is created and maintained by Tobias Blomberg, SM0SVX.
 
 SvxLink-Bootstrap and SvxLink-Dash V4.0 are developed and maintained by Chris Jackson, G4NAB, to provide a guided installation, configuration and operational environment around the standard SvxLink software.
 
@@ -775,7 +775,7 @@ A new entry must be accompanied by package-selection and host-detection tests wh
 
 ## Attribution
 
-SvxLink 26.05.1 remains the work of Tobias Blömberg, SM0SVX, and the upstream SvxLink contributors.
+SvxLink 26.05.1 remains the work of Tobias Blomberg, SM0SVX, and the upstream SvxLink contributors.
 
 SvxLink-Dash V4.0 and SvxLink-Bootstrap are developed and maintained by Chris Jackson, G4NAB.
 
