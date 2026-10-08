@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (state.redirect_url) {
         window.setTimeout(() => {
           window.location.assign(state.redirect_url);
-        }, 1500);
+        }, 11500);
       }
 
       return false;
