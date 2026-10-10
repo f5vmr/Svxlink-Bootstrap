@@ -290,7 +290,7 @@ Bootstrap permits automatic replacement of compiler-installed SvxLink releases f
 SvxLink reports a software version and release version separated by `@`. For example:
 
 ```text
-1.10.1@26.05.1
+1.10.1@26.05.1 or 1.10.99.1@26.05.2
 ```
 
 Bootstrap applies the replacement catalogue to the release component after `@`.
