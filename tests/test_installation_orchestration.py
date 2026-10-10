@@ -28,7 +28,7 @@ RASPBERRY_PI_HOST = {
 
 PACKAGE = {
     "id": "debian_bookworm_amd64",
-    "asset": "svxlink_26.05.1_amd64.deb",
+    "asset": "svxlink_26.05.2_amd64.deb",
 }
 
 EXISTING_SUPPORTED = {
@@ -337,7 +337,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
             "/var/backups/svxlink-bootstrap/20260912-090000"
         )
         package_path = Path(
-            "/tmp/download/svxlink_26.05.1_amd64.deb"
+            "/tmp/download/svxlink_26.05.2_amd64.deb"
         )
         progress_mock = Mock()
         with (
@@ -371,7 +371,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
             stdout,
         )
         self.assertIn(
-            "SvxLink 26.05.1 installed successfully",
+            "SvxLink 26.05.2 installed successfully",
             stdout,
         )
         backup_mock.assert_called_once_with()
@@ -388,13 +388,13 @@ class InstallationOrchestrationTests(unittest.TestCase):
         progress_mock.assert_any_call(
             "package",
             "running",
-            "Installing and verifying SvxLink 26.05.1.",
+            "Installing and verifying SvxLink 26.05.2.",
         )
         progress_mock.assert_any_call(
             "package",
             "completed",
             (
-                "SvxLink 26.05.1 was installed and "
+                "SvxLink 26.05.2 was installed and "
                 "verified successfully."
             ),
         )
@@ -413,7 +413,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
             "/var/backups/svxlink-bootstrap/20260918-190000"
         )
         package_path = Path(
-            "/tmp/download/svxlink_26.05.1_amd64.deb"
+            "/tmp/download/svxlink_26.05.2_amd64.deb"
         )
         progress_mock = Mock()
 
@@ -478,7 +478,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
             "/var/backups/svxlink-bootstrap/20260922-180000"
         )
         package_path = Path(
-            "/tmp/download/svxlink_26.05.1_amd64.deb"
+            "/tmp/download/svxlink_26.05.2_amd64.deb"
         )
         progress_mock = Mock()
 
@@ -515,7 +515,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
         self.assertIn(
             (
                 "Upgrading the package-managed SvxLink "
-                "installation to version 26.05.1."
+                "installation to version 26.05.2."
             ),
             stdout,
         )
@@ -567,7 +567,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
 
     def test_new_installation_downloads_and_installs_package(self):
         package_path = Path(
-            "/tmp/download/svxlink_26.05.1_amd64.deb"
+            "/tmp/download/svxlink_26.05.2_amd64.deb"
         )
         progress_mock = Mock()
 
@@ -605,7 +605,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertEqual(stderr, "")
         self.assertIn(
-            "SvxLink 26.05.1 installed successfully",
+            "SvxLink 26.05.2 installed successfully",
             stdout,
         )
         self.assertEqual(
@@ -648,13 +648,13 @@ class InstallationOrchestrationTests(unittest.TestCase):
         progress_mock.assert_any_call(
             "package",
             "running",
-            "Installing and verifying SvxLink 26.05.1.",
+            "Installing and verifying SvxLink 26.05.2.",
         )
         progress_mock.assert_any_call(
             "package",
             "completed",
             (
-                "SvxLink 26.05.1 was installed and "
+                "SvxLink 26.05.2 was installed and "
                 "verified successfully."
             ),
         )
@@ -718,7 +718,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
 
     def test_package_installation_failure_stops_dashboard(self):
         package_path = Path(
-            "/tmp/download/svxlink_26.05.1_amd64.deb"
+            "/tmp/download/svxlink_26.05.2_amd64.deb"
         )
         progress_mock = Mock()
         with (
@@ -751,7 +751,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
                     "running",
                     (
                         "Installing and verifying "
-                        "SvxLink 26.05.1."
+                        "SvxLink 26.05.2."
                     ),
                 ),
                 call(

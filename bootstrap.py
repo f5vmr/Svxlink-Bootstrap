@@ -192,7 +192,7 @@ def describe_existing_installation(installation):
 
     if action == "retain":
         details.extend([
-            "Compatibility:    supported SvxLink 26.05.1",
+            "Compatibility:    supported SvxLink 26.05.2",
             (
                 "The existing package-managed installation "
                 "will be retained."
@@ -222,15 +222,15 @@ def describe_existing_installation(installation):
     elif action == "upgrade":
         details.extend([
             (
-                "Compatibility:    upgrade available from "
-                "SvxLink 26.05"
+                "Compatibility:    upgrade available to "
+                "SvxLink 26.05.2"
             ),
             (
                 "The existing configuration will be backed up "
                 "before package upgrade."
             ),
             (
-                "The verified SvxLink 26.05.1 package will "
+                "The verified SvxLink 26.05.2 package will "
                 "be installed."
             ),
         ])
@@ -243,7 +243,7 @@ def describe_existing_installation(installation):
                 "up before package conversion."
             ),
             (
-                "The verified SvxLink 26.05.1 package will "
+                "The verified SvxLink 26.05.2 package will "
                 "replace the compiler-installed program."
             ),
         ])
@@ -431,7 +431,7 @@ def perform_installation(
         elif action == "upgrade":
             print(
                 "Upgrading the package-managed SvxLink "
-                "installation to version 26.05.1."
+                "installation to version 26.05.2."
             )
             print()
 
@@ -521,7 +521,7 @@ def perform_installation(
                     progress,
                     "package",
                     "running",
-                    "Installing and verifying SvxLink 26.05.1.",
+                    "Installing and verifying SvxLink 26.05.2.",
                 )
 
                 if action == "repair":
@@ -537,7 +537,7 @@ def perform_installation(
                     "package",
                     "completed",
                     (
-                        "SvxLink 26.05.1 was installed and "
+                        "SvxLink 26.05.2 was installed and "
                         "verified successfully."
                     ),
                 )
@@ -581,7 +581,7 @@ def perform_installation(
             )
             return 7
 
-        print("SvxLink 26.05.1 installed successfully.")
+        print("SvxLink 26.05.2 installed successfully.")
         print()
 
     else:
@@ -613,7 +613,7 @@ def perform_installation(
             ),
         )
         print(
-            "The package-managed SvxLink 26.05.1 "
+            "The package-managed SvxLink 26.05.2 "
             "installation will be retained."
         )
         print()
@@ -714,7 +714,7 @@ def main(download_directory=None, install=False):
 
     if action == "retain":
         print(
-            "Package-managed SvxLink 26.05.1 is already "
+            "Package-managed SvxLink 26.05.2 is already "
             "installed. The package download was skipped."
         )
         print(

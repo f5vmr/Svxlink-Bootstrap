@@ -22,12 +22,12 @@ HOST = {
 }
 
 PACKAGE = {
-    "asset": "svxlink_26.05.1_arm64.deb",
-    "tag": "V26.05.1_arm64_Trixie",
-    "size": 5238768,
+    "asset": "svxlink_26.05.2_arm64.deb",
+    "tag": "Svxlink-V26.05.2-Trixie",
+    "size": 5264280,
     "sha256": (
-        "e9775c769aed7485b95e3a0165c8eadd"
-        "6be94162f82a09fd0b925ab3f1f0de43"
+        "090b35fcf6a7eec3a3e54898a059427d"
+        "9b4620306de224886da27b53fbcb5932"
     ),
 }
 
@@ -142,7 +142,7 @@ class WebManagerTests(unittest.TestCase):
             response.data,
         )
         self.assertIn(
-            b"svxlink_26.05.1_arm64.deb",
+            b"svxlink_26.05.2_arm64.deb",
             response.data,
         )
         self.assertIn(
@@ -189,7 +189,7 @@ class WebManagerTests(unittest.TestCase):
             response.data,
         )
         self.assertIn(
-            b"upgraded to the verified SvxLink 26.05.1",
+            b"upgraded to the verified SvxLink 26.05.2",
             response.data,
         )
         self.assertIn(
@@ -218,7 +218,7 @@ class WebManagerTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            b"previous SvxLink 26.05.1 installation",
+            b"recognised earlier SvxLink 26.05.1 installation",
             response.data,
         )
         self.assertIn(
@@ -259,11 +259,11 @@ class WebManagerTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            b"package-managed SvxLink 26.05 installation",
+            b"recognised earlier package-managed SvxLink",
             response.data,
         )
         self.assertIn(
-            b"upgraded to the verified SvxLink 26.05.1",
+            b"upgraded to the verified SvxLink 26.05.2",
             response.data,
         )
         self.assertIn(

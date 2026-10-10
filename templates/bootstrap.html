@@ -36,7 +36,7 @@
             <div class="page-heading">
                 <h1>SvxLink Bootstrap</h1>
                 <p>
-                    Verified installation of SvxLink 26.05.1
+                    Verified installation of SvxLink 26.05.2
                     and SvxLink-Dash V4.0.
                 </p>
             </div>
@@ -142,29 +142,29 @@
                 </div>
                 {% elif action == "retain" %}
                 <div class="success">
-                    The existing package-managed SvxLink 26.05.1
+                    The existing package-managed SvxLink 26.05.2
                     installation will be retained. Its configuration
                     will be backed up before Dashboard installation.
                 </div>
                 {% elif action == "repair" %}
                 <div class="warning">
-                    A previous SvxLink 26.05.1 installation
+                    A recognised earlier SvxLink 26.05.1 installation
                     containing a faulty version string was detected.
                     Its configuration will be backed up, the active
                     service will be stopped, and the correct verified package will be reinstalled.
                 </div>
                 {% elif action == "upgrade" %}
                 <div class="warning">
-                    A package-managed SvxLink 26.05 installation was
+                    A recognised earlier package-managed SvxLink installation was
                     detected. Its configuration will be backed up, the
                     active service will be stopped, and the installation
-                    will be upgraded to the verified SvxLink 26.05.1
+                    will be upgraded to the verified SvxLink 26.05.2
                     Debian package.
                 </div>
                 {% elif action == "convert" %}
                     {% if installation.supported_version %}
                 <div class="warning">
-                    A compiler-installed SvxLink 26.05.1 was detected.
+                    A compiler-installed SvxLink 26.05.2 was detected.
                     Its configuration will be backed up, an active
                     service will be stopped, and the installation will
                     be converted to the verified Debian package.
@@ -175,7 +175,7 @@
                     release was detected: {{ installation.version }}.
                     Its configuration will be backed up, an active
                     service will be stopped, and the installation will
-                    be upgraded to the verified SvxLink 26.05.1 Debian
+                    be upgraded to the verified SvxLink 26.05.2 Debian
                     package.
                 </div>
                     {% endif %}
@@ -256,7 +256,7 @@
                     <li class="stage" data-stage="package">
                         <span class="stage-marker"></span>
                         <span class="stage-label">
-                            Install and verify SvxLink 26.05.1
+                            Install and verify SvxLink 26.05.2
                         </span>
                     </li>
                     <li class="stage" data-stage="dashboard">
@@ -286,7 +286,7 @@
 
         <div id="completion-panel" class="hidden">
             <div class="success">
-                SvxLink 26.05.1 and SvxLink-Dash V4.0 were
+                SvxLink 26.05.2 and SvxLink-Dash V4.0 were
                 installed successfully.
             </div>
             <p>

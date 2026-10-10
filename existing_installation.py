@@ -11,13 +11,22 @@ import subprocess
 from pathlib import Path
 
 
-SUPPORTED_SVXLINK_VERSION = "26.05.1"
+SUPPORTED_SVXLINK_VERSION = "26.05.2"
 
 KNOWN_FAULTY_PACKAGE_VERSION = "1.10.1@V26.05_Trixie"
 
-UPGRADEABLE_PACKAGE_VERSION = "1.10.0@V26.05"
+KNOWN_FAULTY_PACKAGE_STATUS = "ii svxlink 26.05.1"
 
-UPGRADEABLE_PACKAGE_STATUS = "ii svxlink 26.05"
+UPGRADEABLE_PACKAGE_INSTALLATIONS = frozenset({
+    (
+        "1.10.0@V26.05",
+        "ii svxlink 26.05",
+    ),
+    (
+        "1.10.1@26.05.1",
+        "ii svxlink 26.05.1",
+    ),
+})
 
 REPLACEABLE_COMPILER_RELEASE_YEARS = frozenset({
     "24",
@@ -153,11 +162,17 @@ def detect_svxlink_version(executable):
 
 
 def version_is_supported(version_text):
-    """Return True when the output identifies SvxLink 26.05.1."""
+    """Return True when output identifies the supported release."""
+
+    pattern = (
+        r"(?<![\d.])"
+        + re.escape(SUPPORTED_SVXLINK_VERSION)
+        + r"(?![\d.])"
+    )
 
     return bool(
         re.search(
-            r"(?<![\d.])26\.05\.1(?![\d.])",
+            pattern,
             str(version_text or ""),
         )
     )
@@ -344,27 +359,32 @@ def determine_installation_action(installation):
     if not installation["present"]:
         return "install"
 
+    installed_version = str(
+        installation.get("version", "")
+    ).strip()
+
+    package_status = " ".join(
+        str(
+            installation.get("package_status", "")
+        ).split()
+    )
+
     if (
         installation["package_managed"]
-        and str(
-            installation.get("version", "")
-        ).strip() == KNOWN_FAULTY_PACKAGE_VERSION
-        and version_is_supported(
-            installation.get("package_status", "")
-        )
+        and installed_version
+        == KNOWN_FAULTY_PACKAGE_VERSION
+        and package_status
+        == KNOWN_FAULTY_PACKAGE_STATUS
     ):
         return "repair"
 
     if (
         installation["package_managed"]
-        and str(
-            installation.get("version", "")
-        ).strip() == UPGRADEABLE_PACKAGE_VERSION
-        and " ".join(
-            str(
-                installation.get("package_status", "")
-            ).split()
-        ) == UPGRADEABLE_PACKAGE_STATUS
+        and (
+            installed_version,
+            package_status,
+        )
+        in UPGRADEABLE_PACKAGE_INSTALLATIONS
     ):
         return "upgrade"
 

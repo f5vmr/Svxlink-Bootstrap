@@ -1,6 +1,6 @@
 # SvxLink-Bootstrap
 
-SvxLink-Bootstrap provides a safe, guided route from a supported Debian, Raspberry Pi OS or Armbian installation to a complete SvxLink 26.05.1 and SvxLink-Dash V4.0 system.
+SvxLink-Bootstrap provides a safe, guided route from a supported Debian, Raspberry Pi OS or Armbian installation to a complete SvxLink 26.05.2 and SvxLink-Dash V4.0 system.
 
 It detects the operating system, release, Debian architecture and hardware platform, selects one exact compatible SvxLink Debian package from a controlled manifest, verifies the downloaded package and installs SvxLink-Dash V4.0.
 
@@ -8,7 +8,7 @@ The normal installation is performed through a temporary, token-protected web ma
 
 ## Project relationship
 
-SvxLink 26.05.1 is created and maintained by Tobias Blomberg, SM0SVX.
+SvxLink 26.05.2 is created and maintained by Tobias Blomberg, SM0SVX.
 
 SvxLink-Bootstrap and SvxLink-Dash V4.0 are developed and maintained by Chris Jackson, G4NAB, to provide a guided installation, configuration and operational environment around the standard SvxLink software.
 
@@ -271,7 +271,7 @@ The selected package is downloaded, verified and installed using APT.
 
 No configuration backup is attempted when no previous SvxLink configuration exists.
 
-### Package-managed SvxLink 26.05.1 is installed
+### Package-managed SvxLink 26.05.2 is installed
 
 The existing package is retained.
 
@@ -303,14 +303,14 @@ Automatic replacement is permitted only when:
 * The canonical executable is `/usr/bin/svxlink`.
 * SvxLink is not already recorded as an installed Debian package.
 
-For a recognised older release, the inspection page displays the detected version and warns that it will be upgraded to the verified SvxLink 26.05.1 Debian package. The installation button remains available so that the operator can approve the replacement.
+For a recognised older release, the inspection page displays the detected version and warns that it will be upgraded to the verified SvxLink 26.05.2 Debian package. The installation button remains available so that the operator can approve the replacement.
 
 Bootstrap then:
 
 1. Backs up the existing configuration.
 2. Downloads and verifies the selected package.
 3. Stops `svxlink.service` if it is active.
-4. Installs the verified SvxLink 26.05.1 Debian package.
+4. Installs the verified SvxLink 26.05.2 Debian package.
 5. Verifies the resulting package-managed installation.
 6. Installs SvxLink-Dash V4.0.
 
@@ -324,11 +324,11 @@ This includes:
 * A version without a recognisable release component after `@`.
 * A compiler installation in a nonstandard executable location.
 * Configuration files, users or service remnants that cannot be safely classified.
-* A package-managed SvxLink version other than 26.05.1.
+* A package-managed SvxLink version other than 26.05.2.
 
 Earlier SvxLink releases were commonly installed on operating systems and hardware-support environments that are not compatible with the current packages and Dashboard configuration model. Differences can include GPIO handling, library availability, reflector protocols, talkgroup operation and configuration structure.
 
-For these systems, a fresh installation of a currently supported operating system followed by SvxLink-Bootstrap is advised. Preserve the old configuration separately for reference, but do not assume that it can be restored unchanged onto SvxLink 26.05.1.
+For these systems, a fresh installation of a currently supported operating system followed by SvxLink-Bootstrap is advised. Preserve the old configuration separately for reference, but do not assume that it can be restored unchanged onto SvxLink 26.05.2.
 
 When Bootstrap blocks an installation, the installation button is not offered and no automatic package replacement is attempted.
 
@@ -392,7 +392,7 @@ Bootstrap instructs `dpkg` to retain existing configuration files where a packag
 
 After APT finishes, Bootstrap verifies that:
 
-* SvxLink 26.05.1 is detected.
+* SvxLink 26.05.2 is detected.
 * SvxLink is recorded as package-managed.
 * `/usr/bin/svxlink` is owned by the installed `svxlink` package.
 * The canonical executable is `/usr/bin/svxlink`.
@@ -407,7 +407,7 @@ After installation is authorised, the web manager reports these stages:
 1. Preserve existing configuration.
 2. Download and verify package.
 3. Prepare the existing SvxLink service.
-4. Install and verify SvxLink 26.05.1.
+4. Install and verify SvxLink 26.05.2.
 5. Install SvxLink-Dash V4.0.
 6. Open Dashboard configuration.
 
@@ -512,10 +512,10 @@ Check the executable version:
 /usr/bin/svxlink --version
 ```
 
-For release 26.05.1, the expected executable version is:
+For release 26.05.2, the expected executable version is:
 
 ```text
-1.10.1@26.05.1
+1.10.99.1@26.05.2
 ```
 
 The embedded version must not contain an operating-system, release-tag or processor-architecture label.
@@ -576,7 +576,7 @@ This operation:
 * Does not install the package.
 * Does not change SvxLink configuration.
 
-If a current package-managed SvxLink 26.05.1 installation is already present, the package download is skipped.
+If a current package-managed SvxLink 26.05.2 installation is already present, the package download is skipped.
 
 The destination directory must be writable by the user running the command.
 
@@ -775,7 +775,7 @@ A new entry must be accompanied by package-selection and host-detection tests wh
 
 ## Attribution
 
-SvxLink 26.05.1 remains the work of Tobias Blomberg, SM0SVX, and the upstream SvxLink contributors.
+SvxLink 26.05.2 remains the work of Tobias Blomberg, SM0SVX, and the upstream SvxLink contributors.
 
 SvxLink-Dash V4.0 and SvxLink-Bootstrap are developed and maintained by Chris Jackson, G4NAB.
 

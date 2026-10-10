@@ -25,7 +25,7 @@ class ExistingInstallationTests(unittest.TestCase):
     def test_supported_version_is_recognised(self):
         self.assertTrue(
             version_is_supported(
-                "1.10.1@26.05.1"
+                "1.10.99.1@26.05.2"
             )
         )
 
@@ -215,6 +215,18 @@ class ExistingInstallationTests(unittest.TestCase):
 
         self.assertEqual(action, "upgrade")
 
+    def test_26051_package_installation_is_upgraded(self):
+        action = determine_installation_action({
+            "present": True,
+            "package_managed": True,
+            "supported_version": False,
+            "conversion_candidate": False,
+            "version": "1.10.1@26.05.1",
+            "package_status": "ii  svxlink 26.05.1",
+        })
+
+        self.assertEqual(action, "upgrade")
+
     def test_unknown_package_mismatch_is_blocked(self):
         action = determine_installation_action({
             "present": True,
@@ -309,8 +321,9 @@ class ExistingInstallationTests(unittest.TestCase):
             "",
             "1.9.0@25.05.1",
             "26.05",
+            "26.05.1",
             "26.05.10",
-            "126.05.1",
+            "126.05.2",
         ]
 
         for version in versions:
@@ -420,7 +433,7 @@ class ExistingInstallationTests(unittest.TestCase):
     @patch(
         "existing_installation.inspect_svxlink_executable",
         return_value={
-            "version": "1.10.1@26.05.1",
+            "version": "1.10.99.1@26.05.2",
             "version_source": "executable",
             "runtime_healthy": True,
             "runtime_error": "",

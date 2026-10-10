@@ -258,7 +258,7 @@ class BootstrapTests(unittest.TestCase):
             report,
         )
 
-    def test_supported_existing_installation_report(self):
+    def test_26051_existing_installation_upgrade_report(self):
         report = bootstrap.describe_existing_installation({
             "present": True,
             "installation_type": "package",
@@ -275,11 +275,11 @@ class BootstrapTests(unittest.TestCase):
             "conversion_candidate": False,
         })
         self.assertIn(
-            "supported SvxLink 26.05.1",
+            "upgrade available to SvxLink 26.05.2",
             report,
         )
         self.assertIn(
-            "package-managed installation will be retained",
+            "verified SvxLink 26.05.2 package",
             report,
         )
         self.assertIn(
@@ -335,7 +335,7 @@ class BootstrapTests(unittest.TestCase):
         })
 
         self.assertIn(
-            "upgrade available from SvxLink 26.05",
+            "upgrade available to SvxLink 26.05.2",
             report,
         )
         self.assertIn(
@@ -344,7 +344,7 @@ class BootstrapTests(unittest.TestCase):
         )
         self.assertIn(
             (
-                "verified SvxLink 26.05.1 package will "
+                "verified SvxLink 26.05.2 package will "
                 "be installed"
             ),
             report,

@@ -56,7 +56,7 @@ def verify_installed_package(installation):
 
     if not installation.get("supported_version", False):
         raise PackageInstallationError(
-            "APT completed, but SvxLink 26.05.1 could not "
+            "APT completed, but SvxLink 26.05.2 could not "
             "be verified after installation."
         )
 
