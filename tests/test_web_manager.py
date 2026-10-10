@@ -146,7 +146,7 @@ class WebManagerTests(unittest.TestCase):
             response.data,
         )
         self.assertIn(
-            b"Install SvxLink-Dash V4.0",
+            b"Install SvxLink-Dash V4.1",
             response.data,
         )
         self.assertIn(
@@ -193,7 +193,7 @@ class WebManagerTests(unittest.TestCase):
             response.data,
         )
         self.assertIn(
-            b"Install SvxLink-Dash V4.0",
+            b"Install SvxLink-Dash V4.1",
             response.data,
         )
         resolve_mock.assert_called_once_with()
@@ -230,7 +230,7 @@ class WebManagerTests(unittest.TestCase):
             response.data,
         )
         self.assertIn(
-            b"Install SvxLink-Dash V4.0",
+            b"Install SvxLink-Dash V4.1",
             response.data,
         )
         self.assertNotIn(
@@ -267,7 +267,7 @@ class WebManagerTests(unittest.TestCase):
             response.data,
         )
         self.assertIn(
-            b"Install SvxLink-Dash V4.0",
+            b"Install SvxLink-Dash V4.1",
             response.data,
         )
         self.assertNotIn(

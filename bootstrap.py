@@ -622,7 +622,7 @@ def perform_installation(
         progress,
         "dashboard",
         "running",
-        "Installing SvxLink-Dash V4.0.",
+        "Installing SvxLink-Dash V4.1.",
     )
 
     try:
@@ -644,10 +644,10 @@ def perform_installation(
         progress,
         "dashboard",
         "completed",
-        "SvxLink-Dash V4.0 was installed successfully.",
+        "SvxLink-Dash V4.1 was installed successfully.",
     )
 
-    print("SvxLink-Dash V4.0 installed successfully:")
+    print("SvxLink-Dash V4.1 installed successfully:")
     print(dashboard_path)
     return 0
 
@@ -771,7 +771,7 @@ def parse_arguments():
         help=(
             "Install SvxLink when required, back up any "
             "existing supported configuration, and install "
-            "SvxLink-Dash V4.0."
+            "SvxLink-Dash V4.1."
         ),
     )
 

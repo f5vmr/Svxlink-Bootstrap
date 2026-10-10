@@ -1,16 +1,16 @@
 # SvxLink-Bootstrap
 
-SvxLink-Bootstrap provides a safe, guided route from a supported Debian, Raspberry Pi OS or Armbian installation to a complete SvxLink 26.05.2 and SvxLink-Dash V4.0 system.
+SvxLink-Bootstrap provides a safe, guided route from a supported Debian, Raspberry Pi OS or Armbian installation to a complete SvxLink 26.05.2 and SvxLink-Dash V4.1 system.
 
-It detects the operating system, release, Debian architecture and hardware platform, selects one exact compatible SvxLink Debian package from a controlled manifest, verifies the downloaded package and installs SvxLink-Dash V4.0.
+It detects the operating system, release, Debian architecture and hardware platform, selects one exact compatible SvxLink Debian package from a controlled manifest, verifies the downloaded package and installs SvxLink-Dash V4.1.
 
-The normal installation is performed through a temporary, token-protected web manager. After installation succeeds, the browser is handed directly to the permanent SvxLink-Dash V4.0 configuration workflow.
+The normal installation is performed through a temporary, token-protected web manager. After installation succeeds, the browser is handed directly to the permanent SvxLink-Dash V4.1 configuration workflow.
 
 ## Project relationship
 
 SvxLink 26.05.2 is created and maintained by Tobias Blomberg, SM0SVX.
 
-SvxLink-Bootstrap and SvxLink-Dash V4.0 are developed and maintained by Chris Jackson, G4NAB, to provide a guided installation, configuration and operational environment around the standard SvxLink software.
+SvxLink-Bootstrap and SvxLink-Dash V4.1 are developed and maintained by Chris Jackson, G4NAB, to provide a guided installation, configuration and operational environment around the standard SvxLink software.
 
 For authoritative SvxLink configuration and operating information, refer only to:
 
@@ -46,7 +46,7 @@ The NanoPi Neo package is selected from the device-tree model, Debian Trixie ide
 
 SvxLink-Bootstrap is intended to run only on the supported Bookworm and Trixie systems listed above.
 
-The launcher refuses to proceed on Debian or Raspberry Pi OS releases earlier than Bookworm and performs this check before refreshing apt or installing dependencies. Installing `python3` on an older system would supply only the Python version and supporting packages available to that historical distribution; these may not be capable of running the current Bootstrap or SvxLink-Dash V4.0 software.
+The launcher refuses to proceed on Debian or Raspberry Pi OS releases earlier than Bookworm and performs this check before refreshing apt or installing dependencies. Installing `python3` on an older system would supply only the Python version and supporting packages available to that historical distribution; these may not be capable of running the current Bootstrap or SvxLink-Dash V4.1 software.
 
 Do not use Bootstrap as an in-place operating-system upgrade tool.
 
@@ -57,7 +57,7 @@ For a system based on Jessie, Stretch, Buster, Bullseye or any another unsupport
 3. Install a currently supported operating system appropriate to the hardware.
 4. Update and reboot the new operating system.
 5. Run SvxLink-Bootstrap as a fresh installation.
-6. Recreate and validate the required configuration through SvxLink-Dash V4.0.
+6. Recreate and validate the required configuration through SvxLink-Dash V4.1.
 
 Historical configuration should be retained for reference, but it should not be restored wholesale over the current installation. GPIO libraries, device naming, reflector protocols, talkgroup operation and configuration structure may differ substantially.
 
@@ -190,7 +190,7 @@ The page explains whether Bootstrap will:
 * Convert a supported compiler installation.
 * Stop for manual review.
 
-Review this information before selecting **Install SvxLink-Dash V4.0**.
+Review this information before selecting **Install SvxLink-Dash V4.1**.
 
 ## Host detection
 
@@ -275,7 +275,7 @@ No configuration backup is attempted when no previous SvxLink configuration exis
 
 The existing package is retained.
 
-Bootstrap does not download or reinstall SvxLink, but it backs up the existing configuration before installing or updating SvxLink-Dash V4.0.
+Bootstrap does not download or reinstall SvxLink, but it backs up the existing configuration before installing or updating SvxLink-Dash V4.1.
 
 ### Catalogued compiler-installed SvxLink release is detected
 
@@ -312,7 +312,7 @@ Bootstrap then:
 3. Stops `svxlink.service` if it is active.
 4. Installs the verified SvxLink 26.05.2 Debian package.
 5. Verifies the resulting package-managed installation.
-6. Installs SvxLink-Dash V4.0.
+6. Installs SvxLink-Dash V4.1.
 
 ### Earlier, unidentified or nonstandard installation is detected
 
@@ -408,20 +408,20 @@ After installation is authorised, the web manager reports these stages:
 2. Download and verify package.
 3. Prepare the existing SvxLink service.
 4. Install and verify SvxLink 26.05.2.
-5. Install SvxLink-Dash V4.0.
+5. Install SvxLink-Dash V4.1.
 6. Open Dashboard configuration.
 
 Stages that are unnecessary are shown as skipped. For example, a clean installation has no existing configuration to preserve, while a retained package does not require a package download.
 
 Do not close the browser, close the terminal or interrupt power while installation is running.
 
-## SvxLink-Dash V4.0 installation
+## SvxLink-Dash V4.1 installation
 
 After SvxLink has been prepared, Bootstrap:
 
 1. Creates a temporary working directory.
 2. Clones the `main` branch of:
-   [f5vmr/SvxLink-Dash-V4.0](https://github.com/f5vmr/SvxLink-Dash-V4.0)
+   [f5vmr/SvxLink-Dash-V4.1](https://github.com/f5vmr/SvxLink-Dash-V4.1)
 3. Confirms that `install/install-dashboard.sh` exists and is executable.
 4. Runs the Dashboard’s established installer.
 5. Verifies that the installer completed successfully.
@@ -443,7 +443,7 @@ When installation succeeds, the Bootstrap page displays a completion message and
 http://<device-address>:5000/start
 ```
 
-This is the permanent SvxLink-Dash V4.0 configuration workflow.
+This is the permanent SvxLink-Dash V4.1 configuration workflow.
 
 The Bootstrap web manager shuts down shortly after handover. Port `8765` is temporary and is not the operational Dashboard address.
 
@@ -457,13 +457,13 @@ A new installation initially presents the **Authorise editing** page. Continue t
 
 **Continue with the full Dashboard guide:**
 
-[SvxLink-Dash V4.0 configuration and operating documentation](https://github.com/f5vmr/SvxLink-Dash-V4.0#readme)
+[SvxLink-Dash V4.1 configuration and operating documentation](https://github.com/f5vmr/SvxLink-Dash-V4.1#readme)
 
 ## Service state after installation
 
 A successful package installation does not necessarily mean that `svxlink.service` should immediately be active.
 
-On a new or converted system, the service may remain inactive until a valid configuration has been created and deployed through SvxLink-Dash V4.0. This avoids starting SvxLink against incomplete or unsuitable configuration.
+On a new or converted system, the service may remain inactive until a valid configuration has been created and deployed through SvxLink-Dash V4.1. This avoids starting SvxLink against incomplete or unsuitable configuration.
 
 The Dashboard service should be available for the configuration workflow.
 
@@ -609,7 +609,7 @@ The command-line Bootstrap uses these principal exit statuses:
 |    `5` | Root authority was required                         |
 |    `6` | Configuration backup failed                         |
 |    `7` | SvxLink package installation or verification failed |
-|    `8` | SvxLink-Dash V4.0 installation failed               |
+|    `8` | SvxLink-Dash V4.1 installation failed               |
 |    `9` | The existing SvxLink service could not be prepared  |
 
 ## Troubleshooting
@@ -665,7 +665,7 @@ Review the installation type, version, executable path, runtime error, service s
 
 Bootstrap intentionally refuses to replace a pre-24, unidentified, nonstandard or incompatible package-managed installation automatically.
 
-For a pre-24 installation, preserve all required information and configuration for reference, then perform a fresh installation of a supported operating system and run SvxLink-Bootstrap. Recreate the required configuration through SvxLink-Dash V4.0 rather than restoring an incompatible historical configuration unchanged.
+For a pre-24 installation, preserve all required information and configuration for reference, then perform a fresh installation of a supported operating system and run SvxLink-Bootstrap. Recreate the required configuration through SvxLink-Dash V4.1 rather than restoring an incompatible historical configuration unchanged.
 
 ### Package verification fails
 
@@ -777,6 +777,6 @@ A new entry must be accompanied by package-selection and host-detection tests wh
 
 SvxLink 26.05.2 remains the work of Tobias Blomberg, SM0SVX, and the upstream SvxLink contributors.
 
-SvxLink-Dash V4.0 and SvxLink-Bootstrap are developed and maintained by Chris Jackson, G4NAB.
+SvxLink-Dash V4.1 and SvxLink-Bootstrap are developed and maintained by Chris Jackson, G4NAB.
 
 These projects provide packaging, installation, configuration and operational management around SvxLink. They do not replace the upstream SvxLink project or its authoritative documentation.

@@ -25,7 +25,7 @@ class DashboardInstallationTests(unittest.TestCase):
         )
         self.checkout = (
             self.work_directory
-            / "SvxLink-Dash-V4.0"
+            / "SvxLink-Dash-V4.1"
         )
         self.installer = (
             self.checkout

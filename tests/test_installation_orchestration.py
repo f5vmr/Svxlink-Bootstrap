@@ -266,7 +266,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
             stdout,
         )
         self.assertIn(
-            "SvxLink-Dash V4.0 installed successfully",
+            "SvxLink-Dash V4.1 installed successfully",
             stdout,
         )
         backup_mock.assert_called_once_with()
@@ -320,13 +320,13 @@ class InstallationOrchestrationTests(unittest.TestCase):
         progress_mock.assert_any_call(
             "dashboard",
             "running",
-            "Installing SvxLink-Dash V4.0.",
+            "Installing SvxLink-Dash V4.1.",
         )
         progress_mock.assert_any_call(
             "dashboard",
             "completed",
             (
-                "SvxLink-Dash V4.0 was installed "
+                "SvxLink-Dash V4.1 was installed "
                 "successfully."
             ),
         )
@@ -797,7 +797,7 @@ class InstallationOrchestrationTests(unittest.TestCase):
                 call(
                     "dashboard",
                     "running",
-                    "Installing SvxLink-Dash V4.0.",
+                    "Installing SvxLink-Dash V4.1.",
                 ),
                 call(
                     "dashboard",
