@@ -13,8 +13,8 @@
       "architecture": "arm64",
       "tag": "Svxlink-V26.05.2-Bookworm",
       "asset": "svxlink_26.05.2_arm64.deb",
-      "size": 5221094,
-      "sha256": "ef8c79a0ac63542bead503109f0e372efb26099f09f84ad1d9f6ac06fff9d514",
+      "size": 5221108,
+      "sha256": "9cad54b1deea4df4073c244eb88f04727bf83aa3f99d9af4ecaaf66bb84b2a10",
       "url": "https://github.com/f5vmr/svxlink/releases/download/Svxlink-V26.05.2-Bookworm/svxlink_26.05.2_arm64.deb"
     },
     {
@@ -28,8 +28,8 @@
       "architecture": "arm64",
       "tag": "Svxlink-V26.05.2-Trixie",
       "asset": "svxlink_26.05.2_arm64.deb",
-      "size": 5264280,
-      "sha256": "090b35fcf6a7eec3a3e54898a059427d9b4620306de224886da27b53fbcb5932",
+      "size": 5264076,
+      "sha256": "e71ed0bbae7d2e06b3f08a378a8fe1b10907c79523134ab5734bec2a31ca22df",
       "url": "https://github.com/f5vmr/svxlink/releases/download/Svxlink-V26.05.2-Trixie/svxlink_26.05.2_arm64.deb"
     },
     {
@@ -43,8 +43,8 @@
       "architecture": "armhf",
       "tag": "Svxlink-V26.05.2-Bookworm",
       "asset": "svxlink_26.05.2_armhf.deb",
-      "size": 4862936,
-      "sha256": "c6770deaac399aca7844cb2f39418387197378ef71a526419fb9863bc7dca574",
+      "size": 4862530,
+      "sha256": "88120e42c73d8a13bd080098390cd1d6b35ecaed05f3a65b033a379fd22e71b2",
       "url": "https://github.com/f5vmr/svxlink/releases/download/Svxlink-V26.05.2-Bookworm/svxlink_26.05.2_armhf.deb"
     },
     {
@@ -57,8 +57,8 @@
       "architecture": "amd64",
       "tag": "Svxlink-V26.05.2-Bookworm",
       "asset": "svxlink_26.05.2_amd64.deb",
-      "size": 5417746,
-      "sha256": "938f12f7919e950e3120e2610012ab9655d9e49ca30029f70a03216adeae970d",
+      "size": 5417964,
+      "sha256": "5792e0e3f29237b96aceafc1f522776820b21dc82bbd68cd238e2a088ae4186a",
       "url": "https://github.com/f5vmr/svxlink/releases/download/Svxlink-V26.05.2-Bookworm/svxlink_26.05.2_amd64.deb"
     },
     {
@@ -71,8 +71,8 @@
       "architecture": "amd64",
       "tag": "Svxlink-V26.05.2-Trixie",
       "asset": "svxlink_26.05.2_amd64.deb",
-      "size": 5492764,
-      "sha256": "b93841832654db7326ee0f0d72d438fde12971a96e1f633d0e34070dae99aedb",
+      "size": 5492428,
+      "sha256": "d6729f38d081fc6161aa6028cbb0523aab0e69af682285ef22a6c09b7f9ae40f",
       "url": "https://github.com/f5vmr/svxlink/releases/download/Svxlink-V26.05.2-Trixie/svxlink_26.05.2_amd64.deb"
     },
     {
@@ -85,8 +85,8 @@
       "architecture": "i386",
       "tag": "Svxlink-V26.05.2-Bookworm",
       "asset": "svxlink_26.05.2_i386.deb",
-      "size": 5571546,
-      "sha256": "d912f285b7607d7cd57ac6f07b91b199865daff16af7d29e3d04ac495bd32029",
+      "size": 5571424,
+      "sha256": "b73af4240c5ea65f9231cd16ac32472f08422156f72bce7d4840f684de5f4afa",
       "url": "https://github.com/f5vmr/svxlink/releases/download/Svxlink-V26.05.2-Bookworm/svxlink_26.05.2_i386.deb"
     },
     {
@@ -99,8 +99,8 @@
       "architecture": "armhf",
       "tag": "Svxlink-V26.05.2-Trixie",
       "asset": "svxlink_26.05.2_armhf.deb",
-      "size": 4890052,
-      "sha256": "53af25523a7dbe1f9d36d3283a6712b02031cf3cd184e4c6910e509807b15ffb",
+      "size": 4889892,
+      "sha256": "3d757e9222d6c9871e26cc0e7dbec5fa008bf4d977ea46d382316df3d3d297b6",
       "url": "https://github.com/f5vmr/svxlink/releases/download/Svxlink-V26.05.2-Trixie/svxlink_26.05.2_armhf.deb"
     }
   ]
